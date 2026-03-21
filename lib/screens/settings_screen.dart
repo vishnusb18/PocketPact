@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/common/bottom_nav_bar.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -55,7 +56,7 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
     );
   }
 
@@ -81,28 +82,6 @@ class SettingsScreen extends StatelessWidget {
           Text(title, style: const TextStyle(fontSize: 16, color: Colors.black)),
         ],
       ),
-    );
-  }
-
-  // Bottom Navigation Bar
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      showSelectedLabels: false,
-      showUnselectedLabels: false,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
-        BottomNavigationBarItem(icon: Icon(Icons.sticky_note_2_outlined), label: ''),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
-      ],
-      currentIndex: 2, // Highlight the settings icon
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.grey,
-      onTap: (index) {
-        // TODO: Implement navigation logic for each tab
-      },
     );
   }
 }

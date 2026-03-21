@@ -7,8 +7,7 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'add_friends_screen.dart';
-import 'package:pocket_pact/screens/create_pact_screen.dart';
+import '../widgets/common/bottom_nav_bar.dart';
 
 // data model
 
@@ -128,6 +127,7 @@ class DashboardScreen extends StatelessWidget {
           ),
         ),
       ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 0),
     );
   }
 }
@@ -153,14 +153,7 @@ class _DashboardTopSection extends StatelessWidget {
                 child: _PillButton(
                   label: 'Create Pact',
                   filled: true,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CreatePactScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/create-pact'),
                 ),
               ),
               const SizedBox(width: 12),
@@ -168,12 +161,7 @@ class _DashboardTopSection extends StatelessWidget {
                 child: _PillButton(
                   label: 'Add Friends',
                   filled: false,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AddFriendScreen(),
-                    ),
-                  ),
+                  onTap: () => Navigator.pushNamed(context, '/add-friends'),
                 ),
               ),
             ],
@@ -328,58 +316,64 @@ class _GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedScale(
-      scale: isActive ? 1.0 : 0.95,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOut,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Container(
-          decoration: BoxDecoration(
-            color: goal.cardColor,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                : [],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '${goal.ownerName} Top Goal',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF555555),
+    return GestureDetector(
+      onTap: () {
+        // Navigate to Pact Detail Screen when card is tapped
+        Navigator.pushNamed(context, '/pact-detail');
+      },
+      child: AnimatedScale(
+        scale: isActive ? 1.0 : 0.95,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOut,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Container(
+            decoration: BoxDecoration(
+              color: goal.cardColor,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : [],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${goal.ownerName} Top Goal',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF555555),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                goal.goalTitle,
-                style: const TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111111),
-                  height: 1.1,
+                const SizedBox(height: 8),
+                Text(
+                  goal.goalTitle,
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111111),
+                    height: 1.1,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                goal.subtitle,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF777777),
+                const SizedBox(height: 6),
+                Text(
+                  goal.subtitle,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF777777),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
