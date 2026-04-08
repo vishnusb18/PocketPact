@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "978597517356",
+    "project_id": "pocketpact-58398",
+    "storage_bucket": "pocketpact-58398.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:978597517356:android:b23a45718685df06919989",
+        "android_client_info": {
+          "package_name": "com.example.pocket_pact"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDF5vuv59wDAqGu2xboP1uG5b0Lw14ETxA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
