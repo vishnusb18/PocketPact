@@ -1,8 +1,40 @@
 import 'package:flutter/material.dart';
 import '../widgets/common/bottom_nav_bar.dart';
+import '../services/auth_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  Future<void> _handleLogout(BuildContext context) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      final authService = AuthService();
+      await authService.signOut();
+      
+      // Navigate to auth screen and remove all previous routes
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +88,12 @@ class SettingsScreen extends StatelessWidget {
               _buildSectionHeader("Actions"),
               _buildSettingItem(context, Icons.flag_outlined, "Report a problem"),
               _buildSettingItem(context, Icons.group_add_outlined, "Add account"),
-              _buildSettingItem(context, Icons.logout, "Log out"),
+              _buildSettingItem(
+                context,
+                Icons.logout,
+                "Log out",
+                () => _handleLogout(context),
+              ),
               const SizedBox(height: 40),
             ],
           ),

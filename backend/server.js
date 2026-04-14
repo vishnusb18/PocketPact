@@ -201,11 +201,12 @@ app.get('/api/health', (req, res) => {
 // ============================================
 // Start Server
 // ============================================
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('🚀 PocketPact Backend Server Started!');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`📡 Server running on: http://localhost:${PORT}`);
+  console.log(`📱 Android Emulator: http://10.0.2.2:${PORT}`);
   console.log(`🌍 Environment: ${process.env.PLAID_ENV || 'sandbox'}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('');

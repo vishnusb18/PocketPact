@@ -1,9 +1,10 @@
 // Splash Screen
 // Initial loading screen displayed when the app launches
 // Shows branding with PocketPact name and handshake emoji
-// Navigates to dashboard after brief delay
+// Checks authentication status and navigates accordingly
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
@@ -33,10 +34,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     _controller.forward();
     
-    // Navigate to dashboard after 3 seconds
-    Timer(const Duration(seconds: 3), () {
+    // Check authentication and navigate after 3 seconds
+    Timer(const Duration(seconds: 3), () async {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/');
+        // Check if user is logged in
+        final user = FirebaseAuth.instance.currentUser;
+        
+        if (user != null) {
+          // User is signed in, go to dashboard
+          Navigator.of(context).pushReplacementNamed('/dashboard');
+        } else {
+          // User is not signed in, go to auth screen
+          Navigator.of(context).pushReplacementNamed('/auth');
+        }
       }
     });
   }
