@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/test_screen.dart';
@@ -10,7 +12,11 @@ import 'package:pocket_pact/screens/settings_screen.dart';
 import 'package:pocket_pact/screens/add_friends_screen.dart';
 import 'package:pocket_pact/screens/link_bank_account_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
