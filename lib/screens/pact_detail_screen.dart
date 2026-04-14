@@ -135,9 +135,9 @@ class PactDetailScreen extends StatelessWidget {
   Widget _buildHeaderSection() {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: AppColors.purpleGradient,
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
@@ -307,7 +307,7 @@ class PactDetailScreen extends StatelessWidget {
           Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: AppColors.purpleGradient,
             ),

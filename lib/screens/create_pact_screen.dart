@@ -46,9 +46,9 @@ class _CreatePactScreenState extends State<CreatePactScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFE6D4F7),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFE6D4F7),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new,

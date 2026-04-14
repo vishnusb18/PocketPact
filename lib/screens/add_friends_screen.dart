@@ -41,10 +41,10 @@ class AddFriendScreen extends StatelessWidget {
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: FloatingActionButton(
           onPressed: () {},
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFE6D4F7),
           elevation: 2,
-          shape: const CircleBorder(side: BorderSide(color: Colors.black, width: 2)),
-          child: const Icon(Icons.add, color: Colors.black, size: 30),
+          shape: const CircleBorder(side: BorderSide(color: Color(0xFF9D4EDD), width: 2)),
+          child: const Icon(Icons.add, color: Color(0xFF7B2CBF), size: 30),
         ),
       ),
     );

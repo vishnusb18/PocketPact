@@ -10,7 +10,7 @@ class PlaidConfig {
   // Your Plaid Client ID (get from Plaid Dashboard)
   // Get from: https://dashboard.plaid.com/team/keys
   // TODO: Replace with your actual Plaid client_id after signing up
-  static const String clientId = 'YOUR_PLAID_CLIENT_ID';
+  static const String clientId = '69bf2031f69c58000c95f2b7';
   
   // Backend server URL for token exchange
   // This is YOUR Node.js server that communicates with Plaid

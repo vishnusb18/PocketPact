@@ -3,6 +3,7 @@
 // Shows connection status and provides option to link or unlink
 
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../services/plaid_service.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
@@ -16,6 +17,7 @@ class LinkBankAccountScreen extends StatefulWidget {
 
 class _LinkBankAccountScreenState extends State<LinkBankAccountScreen> {
   final PlaidService _plaidService = PlaidService();
+  final String _userId = const Uuid().v4(); // Generate unique user ID
   bool _isLinked = false;
   bool _isLoading = true;
 
@@ -38,7 +40,7 @@ class _LinkBankAccountScreenState extends State<LinkBankAccountScreen> {
     
     final success = await _plaidService.linkBankAccount(
       context: context,
-      userId: 'demo_user', // Replace with actual user ID
+      userId: _userId,
     );
 
     if (success) {

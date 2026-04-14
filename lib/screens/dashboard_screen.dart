@@ -28,29 +28,29 @@ class TopGoal {
 // hardcoded data for now, will pull user info from profile/plaid once finalized.
 
 final List<TopGoal> _sampleGoals = [
-  TopGoal(
+  const TopGoal(
     ownerName: "Katie's",
     goalTitle: 'Save \$100',
     subtitle: 'this week',
-    cardColor: const Color.fromARGB(255, 230, 212, 247),
+    cardColor: Color.fromARGB(255, 230, 212, 247),
   ),
-  TopGoal(
+  const TopGoal(
     ownerName: "Shriya's",
     goalTitle: 'Invest 10%',
     subtitle: 'of monthly pay',
-    cardColor: const Color.fromARGB(255, 230, 212, 247),
+    cardColor: Color.fromARGB(255, 230, 212, 247),
   ),
-  TopGoal(
+  const TopGoal(
     ownerName: "James's",
     goalTitle: 'No eating out',
     subtitle: 'for 7 days',
-    cardColor: const Color.fromARGB(255, 230, 212, 247),
+    cardColor: Color.fromARGB(255, 230, 212, 247),
   ),
-  TopGoal(
+  const TopGoal(
     ownerName: "John's",
     goalTitle: 'Cut subscriptions',
     subtitle: 'save \$40 / mo',
-    cardColor: const Color.fromARGB(255, 230, 212, 247),
+    cardColor: Color.fromARGB(255, 230, 212, 247),
   ),
 ];
 
@@ -73,9 +73,9 @@ class LeaderboardEntry {
 // Hardcoded leaderboard data for now
 
 final List<LeaderboardEntry> _sampleLeaderboard = [
-  LeaderboardEntry(rank: 1, name: 'John',  username: '@username', score: 2430),
-  LeaderboardEntry(rank: 2, name: 'Jack',  username: '@username', score: 1847),
-  LeaderboardEntry(rank: 3, name: 'Emma',  username: '@username', score: 1674),
+  const LeaderboardEntry(rank: 1, name: 'John',  username: '@username', score: 2430),
+  const LeaderboardEntry(rank: 2, name: 'Jack',  username: '@username', score: 1847),
+  const LeaderboardEntry(rank: 3, name: 'Emma',  username: '@username', score: 1674),
 ];
 
 // Dashboard Screen
@@ -388,22 +388,24 @@ class _LeaderboardSection extends StatelessWidget {
 
   const _LeaderboardSection({required this.entries});
 
-  // Score color per rank, matching the screenshot style
-  Color _scoreColor(int rank) {
+  // Bar color per rank
+  Color _barColor(int rank) {
     switch (rank) {
-      case 1: return const Color(0xFF4CAF50); // green for 1st
-      case 2: return const Color(0xFF2196F3); // blue for 2nd
-      case 3: return const Color(0xFFFF9800); // orange for 3rd
-      default: return Colors.black;
+      case 1: return const Color(0xFF9D4EDD); // purple for 1st
+      case 2: return const Color(0xFF7B2CBF); // darker purple for 2nd
+      case 3: return const Color(0xFFB388EB); // lighter purple for 3rd
+      default: return Colors.grey;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Always expect exactly 3 entries: rank 1 in center, rank 2 left, rank 3 right
-    final first  = entries.firstWhere((e) => e.rank == 1);
-    final second = entries.firstWhere((e) => e.rank == 2);
-    final third  = entries.firstWhere((e) => e.rank == 3);
+    // Sort entries by rank
+    final sortedEntries = List<LeaderboardEntry>.from(entries)
+      ..sort((a, b) => a.rank.compareTo(b.rank));
+    
+    // Find max score for scaling
+    final maxScore = sortedEntries.map((e) => e.score).reduce((a, b) => a > b ? a : b);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -429,7 +431,7 @@ class _LeaderboardSection extends StatelessWidget {
           ),
           const SizedBox(height: 2),
 
-          // Podium
+          // Bar Graph
           Container(
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
@@ -438,34 +440,53 @@ class _LeaderboardSection extends StatelessWidget {
                 bottomRight: Radius.circular(16),
               ),
             ),
-            padding: const EdgeInsets.only(
-                top: 16, bottom: 24, left: 12, right: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            padding: const EdgeInsets.all(20),
+            child: Column(
               children: [
-                // 2nd place (left)
-                Expanded(child: _PodiumEntry(
-                  entry: second,
-                  avatarRadius: 32,
-                  scoreColor: _scoreColor(second.rank),
-                  isFirst: false,
-                )),
-
-                // 1st place (center, taller)
-                Expanded(child: _PodiumEntry(
-                  entry: first,
-                  avatarRadius: 42,
-                  scoreColor: _scoreColor(first.rank),
-                  isFirst: true,
-                )),
-
-                // 3rd place (right)
-                Expanded(child: _PodiumEntry(
-                  entry: third,
-                  avatarRadius: 32,
-                  scoreColor: _scoreColor(third.rank),
-                  isFirst: false,
-                )),
+                // Bar chart
+                SizedBox(
+                  height: 220,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: sortedEntries.map((entry) {
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: _BarChartItem(
+                            entry: entry,
+                            maxScore: maxScore,
+                            barColor: _barColor(entry.rank),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Legend
+                ...sortedEntries.map((entry) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: _barColor(entry.rank),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${entry.rank}. ${entry.name} - ${entry.score} pts',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                )).toList(),
               ],
             ),
           ),
@@ -475,99 +496,57 @@ class _LeaderboardSection extends StatelessWidget {
   }
 }
 
-class _PodiumEntry extends StatelessWidget {
+class _BarChartItem extends StatelessWidget {
   final LeaderboardEntry entry;
-  final double avatarRadius;
-  final Color scoreColor;
-  final bool isFirst;
+  final int maxScore;
+  final Color barColor;
 
-  const _PodiumEntry({
+  const _BarChartItem({
     required this.entry,
-    required this.avatarRadius,
-    required this.scoreColor,
-    required this.isFirst,
+    required this.maxScore,
+    required this.barColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Calculate bar height as percentage of max score
+    final double barHeightRatio = entry.score / maxScore;
+    final double barHeight = 150 * barHeightRatio;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        // Crown for 1st place
-        if (isFirst) ...[
-          const Text('👑', style: TextStyle(fontSize: 28)),
-          const SizedBox(height: 4),
-        ],
-
-        // Avatar with rank badge
-        Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            CircleAvatar(
-              radius: avatarRadius,
-              backgroundColor: Colors.grey.shade300,
-              child: Icon(
-                Icons.person,
-                size: avatarRadius,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            // Rank badge at bottom of avatar
-            Positioned(
-              bottom: -6,
-              child: Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: scoreColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${entry.rank}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Name
-        Text(
-          entry.name,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 4),
-
-        // Score
+        // Score on top of bar
         Text(
           '${entry.score}',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: scoreColor,
+            color: barColor,
           ),
         ),
-        const SizedBox(height: 2),
-
-        // Username handle
-        Text(
-          entry.username,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
+        const SizedBox(height: 4),
+        // The bar itself
+        Container(
+          width: double.infinity,
+          height: barHeight,
+          decoration: BoxDecoration(
+            color: barColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
           ),
+        ),
+        const SizedBox(height: 6),
+        // Name label at bottom
+        Text(
+          entry.name,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

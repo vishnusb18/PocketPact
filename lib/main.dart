@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
+import 'screens/test_screen.dart';
 import 'package:pocket_pact/screens/dashboard_screen.dart';
 import 'package:pocket_pact/screens/create_pact_screen.dart';
 import 'package:pocket_pact/screens/pact_detail_screen.dart';
@@ -20,9 +22,16 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'PocketPact',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.purple,
+        scaffoldBackgroundColor: Colors.white,
+        useMaterial3: true,
+      ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const DashboardScreen(),
+        '/': (context) => const TestScreen(),
+        '/dashboard': (context) => const DashboardScreen(),
+        '/splash': (context) => const SplashScreen(),
         '/pact-detail': (context) => const PactDetailScreen(),
         '/create-pact': (context) => const CreatePactScreen(),
         '/profile': (context) => const ProfileScreen(),
