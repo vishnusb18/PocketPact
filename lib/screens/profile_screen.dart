@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../widgets/common/bottom_nav_bar.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,15 +26,16 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
       ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
     );
   }
 
   // Header Section
   Widget _buildHeader() {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: AppColors.purpleGradient,
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
@@ -281,7 +283,7 @@ class ProfileScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: isUnlocked
                   ? AppColors.goldGradient
-                  : LinearGradient(
+                  : const LinearGradient(
                       colors: [AppColors.grey200, AppColors.grey300],
                     ),
               borderRadius: BorderRadius.circular(12),
