@@ -1,12 +1,12 @@
-// Splash Screen
-// Initial loading screen displayed when the app launches
-// Features Pacty mascot with PocketPact branding
-// Checks authentication status and navigates accordingly
-
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:pocket_pact/theme/colors.dart';
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import '../theme/app_design.dart';
+import '../theme/colors.dart';
+import '../theme/text_styles.dart';
+import '../utils/pacty_messages.dart';
+import '../widgets/common/pacty_animations.dart';
+import '../widgets/common/pacty_widgets.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,219 +15,161 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late AnimationController _pactyController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _pactyBounceAnimation;
-  late Animation<Offset> _pactySlideAnimation;
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
+  late final AnimationController _introController;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
 
   @override
   void initState() {
     super.initState();
-    
-    // Setup fade-in animation for text
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+    _introController = AnimationController(
+      duration: const Duration(milliseconds: 1100),
       vsync: this,
     );
-    
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
+    _fade = CurvedAnimation(
+      parent: _introController,
+      curve: const Interval(0, 0.75, curve: Curves.easeOut),
     );
-    
-    // Setup Pacty mascot animation
-    _pactyController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-    
-    _pactyBounceAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _pactyController,
-        curve: Curves.elasticOut,
-      ),
-    );
-    
-    _pactySlideAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.5),
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.08),
       end: Offset.zero,
     ).animate(
-      CurvedAnimation(
-        parent: _pactyController,
-        curve: Curves.easeOut,
-      ),
+      CurvedAnimation(parent: _introController, curve: Curves.easeOutCubic),
     );
-    
-    // Start animations
-    _pactyController.forward();
-    Future.delayed(const Duration(milliseconds: 300), () {
-      _fadeController.forward();
-    });
-    
-    // Check authentication and navigate after 3.5 seconds
-    Timer(const Duration(milliseconds: 3500), () async {
-      if (mounted) {
-        // Check if user is logged in
-        final user = FirebaseAuth.instance.currentUser;
-        
-        if (user != null) {
-          // User is signed in, go to dashboard
-          Navigator.of(context).pushReplacementNamed('/dashboard');
-        } else {
-          // User is not signed in, go to auth screen
-          Navigator.of(context).pushReplacementNamed('/auth');
-        }
-      }
+
+    _introController.forward();
+
+    Timer(const Duration(milliseconds: 2800), () {
+      if (!mounted) return;
+      final user = FirebaseAuth.instance.currentUser;
+      Navigator.of(context).pushReplacementNamed(
+        user != null ? '/dashboard' : '/auth',
+      );
     });
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
-    _pactyController.dispose();
+    _introController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE6D4F7), // Light violet background
+      backgroundColor: AppColors.lavenderMist,
       body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              
-              // Pacty Mascot with bounce animation
-              SlideTransition(
-                position: _pactySlideAnimation,
-                child: ScaleTransition(
-                  scale: _pactyBounceAnimation,
-                  child: Image.asset(
-                    'assets/pacty_happy.png',
-                    width: 180,
-                    height: 180,
-                    errorBuilder: (context, error, stackTrace) {
-                      // Fallback to original mascot
-                      return Image.asset(
-                        'assets/pacty_mascot.png',
-                        width: 180,
-                        height: 180,
-                      );
-                    },
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // PocketPact branding with fade-in
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Column(
-                  children: [
-                    // PocketPact with handshake between the words
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // "Pocket" in dark purple
-                        Text(
-                          'Pocket',
-                          style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryPurpleDark,
-                            letterSpacing: -1,
-                          ),
-                        ),
-                        // Handshake emoji
-                        Text(
-                          '🤝',
-                          style: TextStyle(
-                            fontSize: 48,
-                          ),
-                        ),
-                        // "Pact" in light purple
-                        Text(
-                          'Pact',
-                          style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryPurpleLight,
-                            letterSpacing: -1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Pacty's intro message
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 32),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryPurple.withOpacity(0.15),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              top: 86,
+              right: 38,
+              child: _SparkleDot(size: 10, opacity: 0.32),
+            ),
+            Positioned(
+              top: 150,
+              left: 34,
+              child: _SparkleDot(size: 14, opacity: 0.22),
+            ),
+            Positioned(
+              bottom: 174,
+              right: 56,
+              child: _SparkleDot(size: 8, opacity: 0.28),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+              child: FadeTransition(
+                opacity: _fade,
+                child: SlideTransition(
+                  position: _slide,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      PactyReactionWidget(
+                        emotion: PactyMessages.splash.first.emotion,
+                        size: 210,
                       ),
-                      child: Text(
-                        "Hi! I'm Pacty 👋\nYour pocket. Your pact.\nWe help you save, together.",
+                      const SizedBox(height: AppSpacing.xl),
+                      Text(
+                        'PocketPact',
+                        style: AppTextStyles.h1.copyWith(
+                          color: AppColors.primaryPurpleDark,
+                          fontSize: 42,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'Save together. Stay accountable.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: AppColors.textPrimary,
-                          height: 1.5,
-                          fontWeight: FontWeight.w500,
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Loading indicator
-                    SizedBox(
-                      width: 30,
-                      height: 30,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.primaryPurple,
-                        ),
+                      const SizedBox(height: AppSpacing.lg),
+                      PactyMessageBubble(
+                        message: PactyMessages.splash.first.message,
+                        alignment: CrossAxisAlignment.center,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              const Spacer(),
-              
-              // Footer tagline
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 32.0),
-                  child: Text(
-                    'Save Together, Achieve Together',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.primaryPurple.withOpacity(0.7),
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
-                    ),
+                      const SizedBox(height: AppSpacing.xl),
+                      const _BrandedLoadingBar(),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandedLoadingBar extends StatelessWidget {
+  const _BrandedLoadingBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 132,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        child: LinearProgressIndicator(
+          minHeight: 6,
+          backgroundColor: Colors.white.withOpacity(0.72),
+          valueColor: const AlwaysStoppedAnimation<Color>(
+            AppColors.primaryPurple,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SparkleDot extends StatelessWidget {
+  final double size;
+  final double opacity;
+
+  const _SparkleDot({
+    required this.size,
+    required this.opacity,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PactyFloatAnimation(
+      amplitude: 4,
+      duration: const Duration(milliseconds: 2600),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: AppColors.accentGold.withOpacity(opacity),
+          shape: BoxShape.circle,
         ),
       ),
     );

@@ -430,6 +430,67 @@ class PactyPulse extends StatefulWidget {
   State<PactyPulse> createState() => _PactyPulseState();
 }
 
+class PactyFloatAnimation extends StatefulWidget {
+  final Widget child;
+  final bool enabled;
+  final double amplitude;
+  final Duration duration;
+
+  const PactyFloatAnimation({
+    super.key,
+    required this.child,
+    this.enabled = true,
+    this.amplitude = 6,
+    this.duration = const Duration(milliseconds: 2400),
+  });
+
+  @override
+  State<PactyFloatAnimation> createState() => _PactyFloatAnimationState();
+}
+
+class _PactyFloatAnimationState extends State<PactyFloatAnimation>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    )..repeat(reverse: true);
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.enabled) return widget.child;
+
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        final dy = -widget.amplitude * _animation.value;
+        final scale = 1 + (_animation.value * 0.018);
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Transform.scale(scale: scale, child: child),
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
 class _PactyPulseState extends State<PactyPulse>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;

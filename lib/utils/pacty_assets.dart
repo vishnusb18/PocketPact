@@ -24,6 +24,8 @@ class PactyAssets {
       case PactyEmotion.determined:
       case PactyEmotion.tracking:
         return '${_basePath}Pacty_trend.png';
+      case PactyEmotion.sad:
+        return '${_basePath}Pacty_sad.png';
       case PactyEmotion.splitting:
       case PactyEmotion.locking:
       case PactyEmotion.saving:
@@ -36,6 +38,13 @@ class PactyAssets {
 
   // Get sad Pacty (for error states)
   static String getSad() => '${_basePath}Pacty_sad.png';
+
+  static String getImageForProgress(double progress) {
+    if (progress >= 0.8) return getImageForEmotion(PactyEmotion.celebrating);
+    if (progress >= 0.4) return getImageForEmotion(PactyEmotion.happy);
+    if (progress > 0) return getImageForEmotion(PactyEmotion.determined);
+    return getImageForEmotion(PactyEmotion.thinking);
+  }
 
   // Check if emotion-specific images are available
   static bool hasEmotionImages() => true;

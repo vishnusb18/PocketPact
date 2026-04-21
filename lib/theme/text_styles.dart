@@ -7,21 +7,21 @@ class AppTextStyles {
     fontSize: 32,
     fontWeight: FontWeight.bold,
     color: AppColors.textPrimary,
-    letterSpacing: -0.5,
+    letterSpacing: 0,
   );
   
   static const TextStyle h2 = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: AppColors.textPrimary,
-    letterSpacing: -0.3,
+    letterSpacing: 0,
   );
   
   static const TextStyle h3 = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
-    letterSpacing: -0.2,
+    letterSpacing: 0,
   );
   
   static const TextStyle h4 = TextStyle(
@@ -69,7 +69,7 @@ class AppTextStyles {
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textWhite,
-    letterSpacing: 0.5,
+    letterSpacing: 0,
   );
   
   // Number/Stats Styles

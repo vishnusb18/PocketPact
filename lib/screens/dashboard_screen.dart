@@ -1,68 +1,56 @@
-// Dashboard Screen:
-// Main home screen showing active pacts slides as a carousel across top.
-// Carousel scrolls every 4 seconds.
-// set to (.88 <--> .12) so the preview of next slide peeks on screen before current scrolls away.
-// Provides navigation to create new pacts and add friends.
-// Shows weekly leaderboard (top 3).
-// Features Pacty mascot helper with motivational messages
-
 import 'dart:async';
 import 'dart:math';
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../widgets/common/bottom_nav_bar.dart';
-import '../widgets/common/pacty_helper.dart';
-import '../widgets/common/pacty_animations.dart';
-import '../utils/pacty_messages.dart';
+import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../theme/app_design.dart';
 import '../theme/colors.dart';
-
-// data model
+import '../theme/text_styles.dart';
+import '../utils/pacty_messages.dart';
+import '../widgets/common/bottom_nav_bar.dart';
+import '../widgets/common/custom_button.dart';
+import '../widgets/common/pacty_widgets.dart';
 
 class TopGoal {
   final String ownerName;
   final String goalTitle;
   final String subtitle;
-  final Color cardColor;
+  final double progress;
 
   const TopGoal({
     required this.ownerName,
     required this.goalTitle,
     required this.subtitle,
-    required this.cardColor,
+    required this.progress,
   });
 }
-
-// hardcoded data for now, will pull user info from profile/plaid once finalized.
 
 final List<TopGoal> _sampleGoals = [
   const TopGoal(
     ownerName: "Katie's",
     goalTitle: 'Save \$100',
     subtitle: 'this week',
-    cardColor: Color.fromARGB(255, 230, 212, 247),
+    progress: 0.72,
   ),
   const TopGoal(
     ownerName: "Shriya's",
     goalTitle: 'Invest 10%',
     subtitle: 'of monthly pay',
-    cardColor: Color.fromARGB(255, 230, 212, 247),
+    progress: 0.46,
   ),
   const TopGoal(
     ownerName: "James's",
     goalTitle: 'No eating out',
     subtitle: 'for 7 days',
-    cardColor: Color.fromARGB(255, 230, 212, 247),
+    progress: 0.58,
   ),
   const TopGoal(
     ownerName: "John's",
     goalTitle: 'Cut subscriptions',
     subtitle: 'save \$40 / mo',
-    cardColor: Color.fromARGB(255, 230, 212, 247),
+    progress: 0.34,
   ),
 ];
-
-// Leaderboard data model
 
 class LeaderboardEntry {
   final int rank;
@@ -78,18 +66,30 @@ class LeaderboardEntry {
   });
 }
 
-// Hardcoded leaderboard data for now
-
 final List<LeaderboardEntry> _sampleLeaderboard = [
-  const LeaderboardEntry(rank: 1, name: 'John',  username: '@username', score: 2430),
-  const LeaderboardEntry(rank: 2, name: 'Jack',  username: '@username', score: 1847),
-  const LeaderboardEntry(rank: 3, name: 'Emma',  username: '@username', score: 1674),
+  const LeaderboardEntry(rank: 1, name: 'John', username: '@john', score: 2430),
+  const LeaderboardEntry(rank: 2, name: 'Jack', username: '@jack', score: 1847),
+  const LeaderboardEntry(rank: 3, name: 'Emma', username: '@emma', score: 1674),
+  const LeaderboardEntry(rank: 4, name: 'You', username: '@you', score: 1420),
+  const LeaderboardEntry(rank: 5, name: 'Maya', username: '@maya', score: 1185),
 ];
 
-// Dashboard Screen
-
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  late final PactyMessage _message;
+
+  @override
+  void initState() {
+    super.initState();
+    _message = PactyMessages.dashboard[
+        Random().nextInt(PactyMessages.dashboard.length)];
+  }
 
   Future<void> _handleSignOut(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -104,7 +104,7 @@ class DashboardScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Sign Out'),
           ),
         ],
@@ -121,48 +121,34 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Pick a random motivational message from Pacty
-    final randomMessage = PactyMessages.dashboard[
-      Random().nextInt(PactyMessages.dashboard.length)
-    ];
-    
     final currentUser = FirebaseAuth.instance.currentUser;
-    
+    final initial = _userInitial(currentUser?.email);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
+        title: const Text('PocketPact'),
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black),
+          icon: const Icon(Icons.menu_rounded),
           onPressed: () {},
-        ),
-        title: const Text(
-          'PocketPact',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black54),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.textSecondary),
             onPressed: () => _handleSignOut(context),
             tooltip: 'Sign Out',
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
             child: GestureDetector(
               onTap: () => Navigator.pushNamed(context, '/profile'),
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: AppColors.primaryPurple.withOpacity(0.2),
+                backgroundColor: AppColors.primaryPurple.withOpacity(0.12),
                 child: Text(
-                  currentUser?.email?.substring(0, 1).toUpperCase() ?? 'U',
+                  initial,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.primaryPurple,
                   ),
                 ),
@@ -173,24 +159,33 @@ class DashboardScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 16),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            AppSpacing.xl,
+          ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Pacty Mascot - Full Animated Helper with prominent display
-              _BouncingPacty(message: randomMessage),
-              const SizedBox(height: 16),
-              
-              // Link Bank Account Card
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _LinkBankAccountCard(),
+              PactyHeroCard(
+                eyebrow: 'TODAY WITH PACTY',
+                title: 'Your money goals are moving.',
+                message: _message,
+                mascotSize: 132,
+                trailing: _DashboardActions(),
               ),
-              const SizedBox(height: 16),
-              
-              _DashboardTopSection(goals: _sampleGoals),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.md),
+              const _LinkBankAccountCard(),
+              const SizedBox(height: AppSpacing.lg),
+              const _SectionHeader(
+                title: 'Top pacts',
+                subtitle: 'A quick read on where everyone stands',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _GoalCarousel(goals: _sampleGoals),
+              const SizedBox(height: AppSpacing.lg),
               _LeaderboardSection(entries: _sampleLeaderboard),
-              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -198,96 +193,69 @@ class DashboardScreen extends StatelessWidget {
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 0),
     );
   }
+
+  String _userInitial(String? email) {
+    if (email == null || email.isEmpty) return 'U';
+    return email.substring(0, 1).toUpperCase();
+  }
 }
 
-// Top section: buttons + carousel
-
-class _DashboardTopSection extends StatelessWidget {
-  final List<TopGoal> goals;
-
-  const _DashboardTopSection({required this.goals});
-
+class _DashboardActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        // Action buttons
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: _PillButton(
-                  label: 'Create Pact',
-                  filled: true,
-                  onTap: () => Navigator.pushNamed(context, '/create-pact'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _PillButton(
-                  label: 'Add Friends',
-                  filled: false,
-                  onTap: () => Navigator.pushNamed(context, '/add-friends'),
-                ),
-              ),
-            ],
+        Expanded(
+          child: CustomButton(
+            label: 'Create Pact',
+            icon: Icons.add_circle_outline_rounded,
+            onPressed: () => Navigator.pushNamed(context, '/create-pact'),
           ),
         ),
-        const SizedBox(height: 20),
-
-        // Auto-sliding goal carousel
-        _GoalCarousel(goals: goals),
-        const SizedBox(height: 12),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: CustomButton(
+            label: 'Add Friends',
+            icon: Icons.person_add_alt_1_rounded,
+            variant: CustomButtonVariant.secondary,
+            onPressed: () => Navigator.pushNamed(context, '/add-friends'),
+          ),
+        ),
       ],
     );
   }
 }
 
-// 1) create pact 2) add friend Buttons
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
 
-class _PillButton extends StatelessWidget {
-  final String label;
-  final bool filled;
-  final VoidCallback onTap;
-
-  const _PillButton({
-    required this.label,
-    required this.filled,
-    required this.onTap,
+  const _SectionHeader({
+    required this.title,
+    required this.subtitle,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: filled ? const Color(0xFF2D2D2D) : Colors.transparent,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: filled ? const Color(0xFF2D2D2D) : Colors.grey.shade400,
-            width: 1.5,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppTextStyles.h3),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            subtitle,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: filled ? Colors.white : Colors.black,
-            letterSpacing: 0.2,
-          ),
-        ),
+        ],
       ),
     );
   }
 }
-
-// Auto-sliding carousel
 
 class _GoalCarousel extends StatefulWidget {
   final List<TopGoal> goals;
@@ -300,22 +268,22 @@ class _GoalCarousel extends StatefulWidget {
 
 class _GoalCarouselState extends State<_GoalCarousel> {
   late final PageController _pageController;
-  late Timer _timer;
-  int _currentPage = 500; // large offset for infinite scroll feel
+  late final Timer _timer;
+  int _currentPage = 500;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(
       initialPage: _currentPage,
-      viewportFraction: 0.88,
+      viewportFraction: 0.9,
     );
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (_pageController.hasClients) {
         _pageController.animateToPage(
           _currentPage + 1,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
+          duration: const Duration(milliseconds: 520),
+          curve: Curves.easeOutCubic,
         );
       }
     });
@@ -335,36 +303,32 @@ class _GoalCarouselState extends State<_GoalCarousel> {
     return Column(
       children: [
         SizedBox(
-          height: 160,
+          height: 170,
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: (page) => setState(() => _currentPage = page),
             itemBuilder: (context, index) {
               final goal = widget.goals[index % widget.goals.length];
-              final bool isActive =
-                  (index % widget.goals.length) == _realIndex;
+              final isActive = (index % widget.goals.length) == _realIndex;
               return _GoalCard(goal: goal, isActive: isActive);
             },
           ),
         ),
-        const SizedBox(height: 12),
-
-        // Dot indicators
+        const SizedBox(height: AppSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(widget.goals.length, (i) {
-            final bool active = i == _realIndex;
+            final active = i == _realIndex;
             return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: active ? 20 : 7,
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: active ? 22 : 7,
               height: 7,
               decoration: BoxDecoration(
                 color: active
-                    ? const Color(0xFF2D2D2D)
-                    : Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(4),
+                    ? AppColors.primaryPurple
+                    : AppColors.primaryPurple.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(AppRadii.pill),
               ),
             );
           }),
@@ -374,74 +338,87 @@ class _GoalCarouselState extends State<_GoalCarousel> {
   }
 }
 
-// Goal card
-
 class _GoalCard extends StatelessWidget {
   final TopGoal goal;
   final bool isActive;
 
-  const _GoalCard({required this.goal, required this.isActive});
+  const _GoalCard({
+    required this.goal,
+    required this.isActive,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // Navigate to Pact Detail Screen when card is tapped
-        Navigator.pushNamed(context, '/pact-detail');
-      },
+      onTap: () => Navigator.pushNamed(context, '/pact-detail'),
       child: AnimatedScale(
-        scale: isActive ? 1.0 : 0.95,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOut,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Container(
-            decoration: BoxDecoration(
-              color: goal.cardColor,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: isActive
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
+        scale: isActive ? 1 : 0.96,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+          padding: AppInsets.cardLarge,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppRadii.xl),
+            border: Border.all(color: AppColors.grey200),
+            boxShadow: isActive ? AppShadows.card : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.lavenderMist,
+                      borderRadius: BorderRadius.circular(AppRadii.md),
+                    ),
+                    child: const Icon(
+                      Icons.savings_outlined,
+                      color: AppColors.primaryPurple,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      '${goal.ownerName} top goal',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w700,
                       ),
-                    ]
-                  : [],
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${goal.ownerName} Top Goal',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF555555),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                goal.goalTitle,
+                style: AppTextStyles.h2.copyWith(height: 1.05),
+              ),
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                goal.subtitle,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+                child: LinearProgressIndicator(
+                  value: goal.progress,
+                  minHeight: 8,
+                  backgroundColor: AppColors.grey100,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.primaryPurple,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  goal.goalTitle,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF111111),
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  goal.subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF777777),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -449,113 +426,210 @@ class _GoalCard extends StatelessWidget {
   }
 }
 
-// Leaderboard
-
 class _LeaderboardSection extends StatelessWidget {
   final List<LeaderboardEntry> entries;
 
   const _LeaderboardSection({required this.entries});
 
-  // Bar color per rank
-  Color _barColor(int rank) {
+  @override
+  Widget build(BuildContext context) {
+    final sortedEntries = List<LeaderboardEntry>.from(entries)
+      ..sort((a, b) => a.rank.compareTo(b.rank));
+    final topThree = sortedEntries.take(3).toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadii.xl),
+        border: Border.all(color: AppColors.grey200),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Leaderboard', style: AppTextStyles.h3),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      'Top savers this week',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.lavenderMist,
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                ),
+                child: Text(
+                  'Weekly',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.primaryPurpleDark,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (topThree.length > 1)
+                Expanded(
+                  child: _PodiumCard(
+                    entry: topThree[1],
+                    accent: _rankColor(topThree[1].rank),
+                    compact: true,
+                  ),
+                ),
+              if (topThree.length > 1) const SizedBox(width: AppSpacing.xs),
+              if (topThree.isNotEmpty)
+                Expanded(
+                  flex: 2,
+                  child: _PodiumCard(
+                    entry: topThree[0],
+                    accent: _rankColor(topThree[0].rank),
+                    isWinner: true,
+                  ),
+                ),
+              if (topThree.length > 2) const SizedBox(width: AppSpacing.xs),
+              if (topThree.length > 2)
+                Expanded(
+                  child: _PodiumCard(
+                    entry: topThree[2],
+                    accent: _rankColor(topThree[2].rank),
+                    compact: true,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ...sortedEntries.map(
+            (entry) => _LeaderboardRow(
+              entry: entry,
+              color: _rankColor(entry.rank),
+              isCurrentUser: entry.name == 'You',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _rankColor(int rank) {
     switch (rank) {
-      case 1: return const Color(0xFF9D4EDD); // purple for 1st
-      case 2: return const Color(0xFF7B2CBF); // darker purple for 2nd
-      case 3: return const Color(0xFFB388EB); // lighter purple for 3rd
-      default: return Colors.grey;
+      case 1:
+        return AppColors.accentGoldDark;
+      case 2:
+        return AppColors.grey400;
+      case 3:
+        return const Color(0xFFC08457);
+      default:
+        return AppColors.primaryPurple;
     }
   }
+}
+
+class _PodiumCard extends StatelessWidget {
+  final LeaderboardEntry entry;
+  final Color accent;
+  final bool isWinner;
+  final bool compact;
+
+  const _PodiumCard({
+    required this.entry,
+    required this.accent,
+    this.isWinner = false,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Sort entries by rank
-    final sortedEntries = List<LeaderboardEntry>.from(entries)
-      ..sort((a, b) => a.rank.compareTo(b.rank));
-    
-    // Find max score for scaling
-    final maxScore = sortedEntries.map((e) => e.score).reduce((a, b) => a > b ? a : b);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 320),
+      padding: EdgeInsets.all(isWinner ? AppSpacing.md : AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: isWinner ? AppColors.lavenderMist : AppColors.grey100,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(
+          color: isWinner ? AppColors.primaryPurple.withOpacity(0.18) : AppColors.grey200,
+        ),
+      ),
       child: Column(
         children: [
-          // Header
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            width: isWinner ? 54 : 42,
+            height: isWinner ? 54 : 42,
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(16),
+              color: accent.withOpacity(isWinner ? 0.18 : 0.12),
+              shape: BoxShape.circle,
             ),
-            child: const Text(
-              'Leaderboard',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            child: Center(
+              child: Text(
+                entry.name.substring(0, 1),
+                style: TextStyle(
+                  color: accent,
+                  fontWeight: FontWeight.w900,
+                  fontSize: isWinner ? 22 : 17,
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 2),
-
-          // Bar Graph
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
+          SizedBox(height: compact ? AppSpacing.xs : AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isWinner ? Icons.workspace_premium_rounded : Icons.military_tech_rounded,
+                color: accent,
+                size: isWinner ? 18 : 15,
               ),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Bar chart
-                SizedBox(
-                  height: 220,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: sortedEntries.map((entry) {
-                      return Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: _BarChartItem(
-                            entry: entry,
-                            maxScore: maxScore,
-                            barColor: _barColor(entry.rank),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                '#${entry.rank}',
+                style: AppTextStyles.caption.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(height: 16),
-                // Legend
-                ...sortedEntries.map((entry) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: _barColor(entry.rank),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${entry.rank}. ${entry.name} - ${entry.score} pts',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                )).toList(),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            entry.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(
+            '${entry.score} pts',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -564,222 +638,183 @@ class _LeaderboardSection extends StatelessWidget {
   }
 }
 
-class _BarChartItem extends StatelessWidget {
+class _LeaderboardRow extends StatelessWidget {
   final LeaderboardEntry entry;
-  final int maxScore;
-  final Color barColor;
+  final Color color;
+  final bool isCurrentUser;
 
-  const _BarChartItem({
+  const _LeaderboardRow({
     required this.entry,
-    required this.maxScore,
-    required this.barColor,
+    required this.color,
+    this.isCurrentUser = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Calculate bar height as percentage of max score
-    final double barHeightRatio = entry.score / maxScore;
-    final double barHeight = 150 * barHeightRatio;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        // Score on top of bar
-        Text(
-          '${entry.score}',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: barColor,
-          ),
+    return Container(
+      margin: const EdgeInsets.only(top: AppSpacing.xs),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: isCurrentUser ? AppColors.lavenderMist : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(
+          color: isCurrentUser
+              ? AppColors.primaryPurple.withOpacity(0.18)
+              : Colors.transparent,
         ),
-        const SizedBox(height: 4),
-        // The bar itself
-        Container(
-          width: double.infinity,
-          height: barHeight,
-          decoration: BoxDecoration(
-            color: barColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-          ),
-        ),
-        const SizedBox(height: 6),
-        // Name label at bottom
-        Text(
-          entry.name,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
-  }
-}
-
-// Continuously bouncing Pacty mascot for dashboard
-class _BouncingPacty extends StatefulWidget {
-  final PactyMessage message;
-
-  const _BouncingPacty({required this.message});
-
-  @override
-  State<_BouncingPacty> createState() => _BouncingPactyState();
-}
-
-class _BouncingPactyState extends State<_BouncingPacty>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _bounceAnimation;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _bounceAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.0, end: -15.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 50,
       ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: -15.0, end: 0.0)
-            .chain(CurveTween(curve: Curves.bounceOut)),
-        weight: 50,
-      ),
-    ]).animate(_controller);
-
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _bounceAnimation.value),
-          child: Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primaryPurple.withOpacity(0.05),
-              AppColors.accentGold.withOpacity(0.05),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryPurple.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(AppRadii.sm),
             ),
-          ],
-        ),
-        child: PactyHelper(
-          message: widget.message,
-          mascotSize: 150,
-          animate: true,
-          showBubble: true,
-          padding: EdgeInsets.zero,
-        ),
+            child: Text(
+              '${entry.rank}',
+              style: AppTextStyles.caption.copyWith(
+                color: color,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.grey100,
+            child: Text(
+              entry.name.substring(0, 1),
+              style: AppTextStyles.caption.copyWith(
+                color: color,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        entry.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    if (isCurrentUser) ...[
+                      const SizedBox(width: AppSpacing.xs),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xs,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryPurple,
+                          borderRadius: BorderRadius.circular(AppRadii.pill),
+                        ),
+                        child: Text(
+                          'You',
+                          style: AppTextStyles.caption.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Text(
+                  entry.username,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '${entry.score} pts',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// Link Bank Account Card
 class _LinkBankAccountCard extends StatelessWidget {
+  const _LinkBankAccountCard();
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/link-bank-account'),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primaryPurple.withOpacity(0.1),
-              AppColors.accentGold.withOpacity(0.1),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        onTap: () => Navigator.pushNamed(context, '/link-bank-account'),
+        child: Ink(
+          padding: AppInsets.card,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppRadii.lg),
+            border: Border.all(color: AppColors.primaryPurple.withOpacity(0.12)),
+            boxShadow: AppShadows.soft,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryPurple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppRadii.md),
+                ),
+                child: const Icon(
+                  Icons.account_balance_rounded,
+                  color: AppColors.primaryPurple,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Link your bank',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      'Track savings securely with Plaid',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: AppColors.primaryPurple,
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.primaryPurple.withOpacity(0.3),
-            width: 2,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primaryPurple,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.account_balance,
-                color: Colors.white,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Link Your Bank Account',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Connect via Plaid to track savings',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 18,
-              color: AppColors.primaryPurple,
-            ),
-          ],
         ),
       ),
     );

@@ -1,13 +1,10 @@
-// Pact Detail Screen
-// Shows detailed view of a specific pact
-// Displays progress bar, member contributions, and activity history
-// Provides options to add contributions or manage pact settings
-
 import 'package:flutter/material.dart';
+import '../theme/app_design.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../widgets/common/custom_button.dart';
+import '../widgets/common/pacty_widgets.dart';
 
-// Mock data models for UI demonstration
 class PactMember {
   final String name;
   final String avatarUrl;
@@ -37,8 +34,7 @@ class ContributionItem {
 class PactDetailScreen extends StatelessWidget {
   const PactDetailScreen({super.key});
 
-  // Mock data for demonstration
-  static const String pactName = "Summer Vacation Fund";
+  static const String pactName = 'Summer Vacation Fund';
   static const double goalAmount = 500.0;
   static const double currentAmount = 230.0;
   static const int daysRemaining = 45;
@@ -61,7 +57,7 @@ class PactDetailScreen extends StatelessWidget {
       memberName: 'Katie',
       amount: 25.0,
       date: DateTime.now().subtract(const Duration(days: 2)),
-      note: 'Bonus from work!',
+      note: 'Bonus from work',
     ),
     ContributionItem(
       memberName: 'James',
@@ -78,31 +74,26 @@ class PactDetailScreen extends StatelessWidget {
       memberName: 'Emma',
       amount: 25.0,
       date: DateTime.now().subtract(const Duration(days: 6)),
-      note: 'Let\'s do this!',
+      note: "Let's do this",
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final double progressPercentage = (currentAmount / goalAmount * 100).clamp(0, 100);
+    final progress = (currentAmount / goalAmount).clamp(0.0, 1.0);
+    final remaining = goalAmount - currentAmount;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Pact Details',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
+        title: const Text('Pact Details'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
+            icon: const Icon(Icons.more_horiz_rounded),
             onPressed: () {},
           ),
         ],
@@ -110,233 +101,389 @@ class PactDetailScreen extends StatelessWidget {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 80),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.xs,
+              AppSpacing.md,
+              112,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeaderSection(),
-                const SizedBox(height: 24),
-                _buildProgressSection(progressPercentage),
-                const SizedBox(height: 32),
-                _buildMembersSection(),
-                const SizedBox(height: 32),
-                _buildContributionHistorySection(),
-                const SizedBox(height: 24),
+                _SummaryCard(
+                  progress: progress,
+                  remaining: remaining,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _ProgressCard(
+                  progress: progress,
+                  remaining: remaining,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                const _MembersSection(),
+                const SizedBox(height: AppSpacing.lg),
+                const _ContributionHistorySection(),
               ],
             ),
           ),
-          _buildAddContributionButton(context),
+          _AddContributionButton(onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Add Contribution feature coming soon.'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }),
         ],
       ),
     );
   }
+}
 
-  // 1. Header Section
-  Widget _buildHeaderSection() {
+class _SummaryCard extends StatelessWidget {
+  final double progress;
+  final double remaining;
+
+  const _SummaryCard({
+    required this.progress,
+    required this.remaining,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: AppColors.purpleGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+      padding: AppInsets.cardLarge,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryPurpleDark,
+            AppColors.primaryPurple,
+            AppColors.primaryPurpleLight,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppRadii.xl),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ACTIVE PACT',
+                      style: AppTextStyles.caption.copyWith(
+                        color: Colors.white.withOpacity(0.72),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      PactDetailScreen.pactName,
+                      style: AppTextStyles.h2.copyWith(
+                        color: Colors.white,
+                        height: 1.12,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _StatusPill(text: '${PactDetailScreen.daysRemaining} days left'),
+                  ],
+                ),
+              ),
+              PactyReactionWidget.forProgress(
+                progress: progress,
+                size: 112,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryMetric(
+                  label: 'Saved',
+                  value: '\$${PactDetailScreen.currentAmount.toStringAsFixed(0)}',
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _SummaryMetric(
+                  label: 'Goal',
+                  value: '\$${PactDetailScreen.goalAmount.toStringAsFixed(0)}',
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _SummaryMetric(
+                  label: 'To go',
+                  value: '\$${remaining.toStringAsFixed(0)}',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String text;
+
+  const _StatusPill({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        border: Border.all(color: Colors.white.withOpacity(0.18)),
+      ),
+      child: Text(
+        text,
+        style: AppTextStyles.caption.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
         ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+    );
+  }
+}
+
+class _SummaryMetric extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _SummaryMetric({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.13),
+        borderRadius: BorderRadius.circular(AppRadii.md),
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            pactName,
-            style: AppTextStyles.h2.copyWith(
-              color: Colors.white,
-              fontSize: 28,
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.white.withOpacity(0.72),
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xxs),
           Text(
-            '\$${goalAmount.toStringAsFixed(0)} Goal',
-            style: AppTextStyles.h3.copyWith(
-              color: AppColors.accentGold,
-              fontSize: 22,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '$daysRemaining days remaining',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  // 2. Progress Section
-  Widget _buildProgressSection(double progressPercentage) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+class _ProgressCard extends StatelessWidget {
+  final double progress;
+  final double remaining;
+
+  const _ProgressCard({
+    required this.progress,
+    required this.remaining,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final percentage = progress * 100;
+
+    return Container(
+      padding: AppInsets.cardLarge,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadii.xl),
+        border: Border.all(color: AppColors.grey200),
+        boxShadow: AppShadows.soft,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Progress',
-                style: AppTextStyles.h3,
-              ),
+              Text('Progress', style: AppTextStyles.h3),
               Text(
-                '${progressPercentage.toStringAsFixed(0)}%',
+                '${percentage.toStringAsFixed(0)}%',
                 style: AppTextStyles.h3.copyWith(
-                  color: AppColors.accentGold,
+                  color: AppColors.primaryPurple,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Progress Bar
-          Container(
-            height: 24,
-            decoration: BoxDecoration(
-              color: AppColors.grey200,
-              borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: AppSpacing.md),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 14,
+              backgroundColor: AppColors.grey100,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.accentGoldDark,
+              ),
             ),
-            child: Stack(
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: _AmountTile(
+                  label: 'Saved so far',
+                  value: '\$${PactDetailScreen.currentAmount.toStringAsFixed(2)}',
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _AmountTile(
+                  label: 'Remaining',
+                  value: '\$${remaining.toStringAsFixed(2)}',
+                  color: AppColors.primaryPurple,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmountTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _AmountTile({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(AppRadii.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: color,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MembersSection extends StatelessWidget {
+  const _MembersSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionShell(
+      title: 'Members',
+      trailing: '${PactDetailScreen.members.length} people',
+      child: Column(
+        children: PactDetailScreen.members
+            .map((member) => _MemberItem(member: member))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _MemberItem extends StatelessWidget {
+  final PactMember member;
+
+  const _MemberItem({required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    final memberProgress = member.contribution / PactDetailScreen.goalAmount;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        children: [
+          _InitialAvatar(name: member.name),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                FractionallySizedBox(
-                  widthFactor: progressPercentage / 100,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: AppColors.goldGradient,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.accentGold.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                Text(
+                  member.name,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                  child: LinearProgressIndicator(
+                    value: memberProgress,
+                    minHeight: 7,
+                    backgroundColor: AppColors.grey100,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.primaryPurpleLight,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          // Amount Display
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '\$${currentAmount.toStringAsFixed(2)} saved',
-                style: AppTextStyles.bodyLarge.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.success,
-                ),
-              ),
-              Text(
-                '\$${(goalAmount - currentAmount).toStringAsFixed(2)} to go',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 3. Members Section
-  Widget _buildMembersSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Members',
-                style: AppTextStyles.h3,
-              ),
-              Text(
-                '${members.length} people',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ...members.map((member) => _buildMemberItem(member)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMemberItem(PactMember member) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Avatar
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: AppColors.purpleGradient,
-            ),
-            child: Center(
-              child: Text(
-                member.name[0].toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Name
-          Expanded(
-            child: Text(
-              member.name,
-              style: AppTextStyles.bodyLarge.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          // Contribution Amount
+          const SizedBox(width: AppSpacing.md),
           Text(
             '\$${member.contribution.toStringAsFixed(0)}',
             style: AppTextStyles.bodyLarge.copyWith(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w900,
               color: AppColors.primaryPurple,
             ),
           ),
@@ -344,165 +491,214 @@ class PactDetailScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  // 4. Contribution History Section
-  Widget _buildContributionHistorySection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+class _ContributionHistorySection extends StatelessWidget {
+  const _ContributionHistorySection();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionShell(
+      title: 'Recent Activity',
       child: Column(
+        children: PactDetailScreen.contributions
+            .map((item) => _ContributionHistoryItem(contribution: item))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _ContributionHistoryItem extends StatelessWidget {
+  final ContributionItem contribution;
+
+  const _ContributionHistoryItem({required this.contribution});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recent Activity',
-            style: AppTextStyles.h3,
+          _InitialAvatar(name: contribution.memberName, size: 40),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        contribution.memberName,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '+\$${contribution.amount.toStringAsFixed(2)}',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.success,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  _formatDate(contribution.date),
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                if (contribution.note != null &&
+                    contribution.note!.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey100,
+                      borderRadius: BorderRadius.circular(AppRadii.sm),
+                    ),
+                    child: Text(
+                      contribution.note!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.grey700,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          ...contributions.map((contribution) => _buildContributionHistoryItem(contribution)),
         ],
       ),
     );
   }
 
-  Widget _buildContributionHistoryItem(ContributionItem contribution) {
-    final String dateText = _formatDate(contribution.date);
+  String _formatDate(DateTime date) {
+    final difference = DateTime.now().difference(date).inDays;
+    if (difference == 0) return 'Today';
+    if (difference == 1) return 'Yesterday';
+    if (difference < 7) return '$difference days ago';
+    return '${date.month}/${date.day}/${date.year}';
+  }
+}
 
+class _SectionShell extends StatelessWidget {
+  final String title;
+  final String? trailing;
+  final Widget child;
+
+  const _SectionShell({
+    required this.title,
+    required this.child,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: AppInsets.cardLarge,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.grey200,
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(AppRadii.xl),
+        border: Border.all(color: AppColors.grey200),
+        boxShadow: AppShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Member Name
-              Text(
-                contribution.memberName,
-                style: AppTextStyles.bodyLarge.copyWith(
-                  fontWeight: FontWeight.w600,
+              Expanded(child: Text(title, style: AppTextStyles.h3)),
+              if (trailing != null)
+                Text(
+                  trailing!,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              // Amount
-              Text(
-                '+\$${contribution.amount.toStringAsFixed(2)}',
-                style: AppTextStyles.bodyLarge.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.success,
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 4),
-          // Date
-          Text(
-            dateText,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          // Note (if present)
-          if (contribution.note != null && contribution.note!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.grey100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                contribution.note!,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-          ],
+          const SizedBox(height: AppSpacing.md),
+          child,
         ],
       ),
     );
   }
+}
 
-  // 5. Add Contribution Button
-  Widget _buildAddContributionButton(BuildContext context) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
+class _InitialAvatar extends StatelessWidget {
+  final String name;
+  final double size;
+
+  const _InitialAvatar({
+    required this.name,
+    this.size = 48,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: AppColors.purpleGradient,
+      ),
+      child: Text(
+        name.substring(0, 1).toUpperCase(),
+        style: TextStyle(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: () {
-              // TODO: Navigate to AddContributionScreen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Add Contribution feature coming soon!'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryPurple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.add_circle_outline, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  'Add Contribution',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          fontSize: size * 0.42,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
   }
+}
 
-  // Helper method to format date
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date).inDays;
+class _AddContributionButton extends StatelessWidget {
+  final VoidCallback onPressed;
 
-    if (difference == 0) {
-      return 'Today';
-    } else if (difference == 1) {
-      return 'Yesterday';
-    } else if (difference < 7) {
-      return '$difference days ago';
-    } else {
-      return '${date.month}/${date.day}/${date.year}';
-    }
+  const _AddContributionButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.lg,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.96),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 18,
+              offset: const Offset(0, -8),
+            ),
+          ],
+        ),
+        child: CustomButton(
+          label: 'Add Contribution',
+          icon: Icons.add_circle_outline_rounded,
+          onPressed: onPressed,
+        ),
+      ),
+    );
   }
 }

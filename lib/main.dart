@@ -12,6 +12,7 @@ import 'package:pocket_pact/screens/profile_screen.dart';
 import 'package:pocket_pact/screens/settings_screen.dart';
 import 'package:pocket_pact/screens/add_friends_screen.dart';
 import 'package:pocket_pact/screens/link_bank_account_screen.dart';
+import 'package:pocket_pact/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,11 +30,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'PocketPact',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.purple,
-        scaffoldBackgroundColor: Colors.white,
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),

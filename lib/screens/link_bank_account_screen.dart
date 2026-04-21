@@ -55,7 +55,7 @@ class _LinkBankAccountScreenState extends State<LinkBankAccountScreen> {
           setState(() => _isLinked = true);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Bank account linked successfully! 🎉'),
+              content: Text('Bank account linked successfully.'),
               backgroundColor: Colors.green,
             ),
           );
