@@ -9,9 +9,13 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/common/bottom_nav_bar.dart';
 import '../widgets/common/pacty_helper.dart';
+import '../widgets/common/pacty_animations.dart';
 import '../utils/pacty_messages.dart';
+import '../services/auth_service.dart';
+import '../theme/colors.dart';
 
 // data model
 
@@ -87,12 +91,42 @@ final List<LeaderboardEntry> _sampleLeaderboard = [
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
+  Future<void> _handleSignOut(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await AuthService().signOut();
+      if (context.mounted) {
+        Navigator.of(context).pushReplacementNamed('/auth');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Pick a random motivational message from Pacty
     final randomMessage = PactyMessages.dashboard[
       Random().nextInt(PactyMessages.dashboard.length)
     ];
+    
+    final currentUser = FirebaseAuth.instance.currentUser;
     
     return Scaffold(
       backgroundColor: Colors.white,
@@ -113,12 +147,26 @@ class DashboardScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.black54),
+            onPressed: () => _handleSignOut(context),
+            tooltip: 'Sign Out',
+          ),
           Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.grey.shade300,
-              child: const Icon(Icons.person, size: 20, color: Colors.black54),
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/profile'),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.primaryPurple.withOpacity(0.2),
+                child: Text(
+                  currentUser?.email?.substring(0, 1).toUpperCase() ?? 'U',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryPurple,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -128,16 +176,14 @@ class DashboardScreen extends StatelessWidget {
           padding: const EdgeInsets.only(top: 16),
           child: Column(
             children: [
-              // Pacty Helper - Motivational Message
+              // Pacty Mascot - Full Animated Helper with prominent display
+              _BouncingPacty(message: randomMessage),
+              const SizedBox(height: 16),
+              
+              // Link Bank Account Card
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: PactyHelperCompact(
-                  message: randomMessage.message,
-                  emotion: randomMessage.emotion,
-                  onTap: () {
-                    // Could show more tips or navigate somewhere
-                  },
-                ),
+                child: _LinkBankAccountCard(),
               ),
               const SizedBox(height: 16),
               
@@ -571,6 +617,171 @@ class _BarChartItem extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ],
+    );
+  }
+}
+
+// Continuously bouncing Pacty mascot for dashboard
+class _BouncingPacty extends StatefulWidget {
+  final PactyMessage message;
+
+  const _BouncingPacty({required this.message});
+
+  @override
+  State<_BouncingPacty> createState() => _BouncingPactyState();
+}
+
+class _BouncingPactyState extends State<_BouncingPacty>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _bounceAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _bounceAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: -15.0)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -15.0, end: 0.0)
+            .chain(CurveTween(curve: Curves.bounceOut)),
+        weight: 50,
+      ),
+    ]).animate(_controller);
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _bounceAnimation.value),
+          child: Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryPurple.withOpacity(0.05),
+              AppColors.accentGold.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryPurple.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: PactyHelper(
+          message: widget.message,
+          mascotSize: 150,
+          animate: true,
+          showBubble: true,
+          padding: EdgeInsets.zero,
+        ),
+      ),
+    );
+  }
+}
+
+// Link Bank Account Card
+class _LinkBankAccountCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/link-bank-account'),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primaryPurple.withOpacity(0.1),
+              AppColors.accentGold.withOpacity(0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primaryPurple.withOpacity(0.3),
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryPurple,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.account_balance,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Link Your Bank Account',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Connect via Plaid to track savings',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 18,
+              color: AppColors.primaryPurple,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

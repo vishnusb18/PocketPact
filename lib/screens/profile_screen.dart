@@ -1,26 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 import '../widgets/common/bottom_nav_bar.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
+import '../models/user.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final _authService = AuthService();
+  final _userService = UserService();
+  AppUser? _userProfile;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final profile = await _userService.getCurrentUserProfile();
+      if (mounted) {
+        setState(() {
+          _userProfile = profile;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading profile: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleSignOut() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _authService.signOut();
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/auth');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        body: Center(child: CircularProgressIndicator()),
+        bottomNavigationBar: AppBottomNavBar(currentIndex: 1),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _buildHeader(),
+              _buildHeader(currentUser, _userProfile),
               const SizedBox(height: 24),
-              _buildQuickStats(),
+              _buildQuickStats(_userProfile),
               const SizedBox(height: 24),
-              _buildAchievements(),
+              _buildAchievements(_userProfile),
               const SizedBox(height: 24),
               _buildMyPactsPreview(),
+              const SizedBox(height: 16),
+              _buildSignOutButton(),
               const SizedBox(height: 24),
             ],
           ),
@@ -31,7 +110,11 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // Header Section
-  Widget _buildHeader() {
+  Widget _buildHeader(User? currentUser, AppUser? userProfile) {
+    final displayName = userProfile?.displayName ?? currentUser?.displayName ?? 'User';
+    final email = currentUser?.email ?? 'No email';
+    final activePacts = userProfile?.activePacts ?? 0;
+
     return Container(
       decoration: const BoxDecoration(
         gradient: AppColors.purpleGradient,
@@ -71,12 +154,21 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // User Name
-          const Text(
-            'Alex Johnson',
-            style: TextStyle(
+          Text(
+            displayName,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.textWhite,
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Email
+          Text(
+            email,
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textWhite.withOpacity(0.8),
             ),
           ),
           const SizedBox(height: 8),
@@ -87,9 +179,11 @@ class ProfileScreen extends StatelessWidget {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
-              'Saving with 3 active pacts',
-              style: TextStyle(
+            child: Text(
+              activePacts > 0 
+                  ? 'Saving with $activePacts active ${activePacts == 1 ? "pact" : "pacts"}'
+                  : 'Ready to start saving!',
+              style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textWhite,
                 fontWeight: FontWeight.w500,
@@ -102,7 +196,11 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // Quick Stats Section
-  Widget _buildQuickStats() {
+  Widget _buildQuickStats(AppUser? userProfile) {
+    final totalContributed = userProfile?.totalContributed ?? 0.0;
+    final activePacts = userProfile?.activePacts ?? 0;
+    final completedPacts = userProfile?.completedPacts ?? 0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -119,8 +217,8 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatCard(
-                  icon: Icons.account_balance_wallet,
-                  value: '₹12,450',
+                  icon: Icons.currency_rupee,
+                  value: '₹${totalContributed.toStringAsFixed(0)}',
                   label: 'Total\nContributed',
                   color: AppColors.primaryPurple,
                 ),
@@ -129,7 +227,7 @@ class ProfileScreen extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   icon: Icons.group,
-                  value: '3',
+                  value: '$activePacts',
                   label: 'Active\nPacts',
                   color: AppColors.accentGoldDark,
                 ),
@@ -138,7 +236,7 @@ class ProfileScreen extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   icon: Icons.check_circle,
-                  value: '5',
+                  value: '$completedPacts',
                   label: 'Completed\nPacts',
                   color: AppColors.success,
                 ),
@@ -208,7 +306,9 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // Achievements Section
-  Widget _buildAchievements() {
+  Widget _buildAchievements(AppUser? userProfile) {
+    final completedPacts = userProfile?.completedPacts ?? 0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -225,23 +325,23 @@ class ProfileScreen extends StatelessWidget {
             children: [
               _buildAchievementCard(
                 icon: Icons.emoji_events,
-                title: 'First Pact Joined',
-                description: 'Started your saving journey',
-                isUnlocked: true,
+                title: 'First Pact',
+                description: 'Joined your first savings pact',
+                isUnlocked: (userProfile?.activePacts ?? 0) > 0 || completedPacts > 0,
               ),
               const SizedBox(height: 12),
               _buildAchievementCard(
                 icon: Icons.trending_up,
                 title: 'Consistent Contributor',
                 description: 'Made contributions for 30 days straight',
-                isUnlocked: true,
+                isUnlocked: (userProfile?.totalContributed ?? 0) > 1000,
               ),
               const SizedBox(height: 12),
               _buildAchievementCard(
                 icon: Icons.stars,
                 title: 'Goal Crusher',
                 description: 'Completed 5 pacts successfully',
-                isUnlocked: true,
+                isUnlocked: completedPacts >= 5,
               ),
             ],
           ),
@@ -447,6 +547,37 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Sign Out Button
+  Widget _buildSignOutButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SizedBox(
+        width: double.infinity,
+        height: 54,
+        child: ElevatedButton.icon(
+          onPressed: _handleSignOut,
+          icon: const Icon(Icons.logout),
+          label: const Text(
+            'Sign Out',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red.shade50,
+            foregroundColor: Colors.red.shade700,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.red.shade200),
+            ),
+          ),
+        ),
       ),
     );
   }

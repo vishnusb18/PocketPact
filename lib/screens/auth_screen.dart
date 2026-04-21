@@ -4,7 +4,9 @@
 // Validates credentials and manages authentication state
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -17,13 +19,16 @@ class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
   final _authService = AuthService();
+  final _userService = UserService();
   
   bool _isSignUp = false;
   bool _isLoading = false;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -40,6 +45,30 @@ class _AuthScreenState extends State<AuthScreen> {
         _emailController.text,
         _passwordController.text,
       );
+      
+      // Create user profile in Firestore after successful signup
+      if (success) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          try {
+            await _userService.createUserProfile(
+              user,
+              displayName: _nameController.text.trim().isNotEmpty 
+                  ? _nameController.text.trim() 
+                  : null,
+            );
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Profile created but error saving details: $e'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          }
+        }
+      }
     } else {
       success = await _authService.signIn(
         _emailController.text,
@@ -90,6 +119,33 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ),
                     const SizedBox(height: 40),
+                    // Name Field (only for sign up)
+                    if (_isSignUp) ...[
+                      TextFormField(
+                        controller: _nameController,
+                        keyboardType: TextInputType.name,
+                        decoration: InputDecoration(
+                          labelText: 'Name',
+                          hintStyle: const TextStyle(color: Colors.grey),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.grey),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (_isSignUp && (value == null || value.isEmpty)) {
+                            return 'Please enter your name';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     // Email Field
                     TextFormField(
                       controller: _emailController,
