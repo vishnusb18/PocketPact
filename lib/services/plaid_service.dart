@@ -26,14 +26,10 @@ class PlaidService {
     required BuildContext context,
     required String userId,
   }) async {
+    bool linkSuccessful = false;
+    
     try {
       // Step 1: Get link token from backend
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Connecting to Plaid...')),
-        );
-      }
-      
       final linkToken = await getLinkTokenFromBackend(userId: userId);
       
       if (linkToken == null) {
@@ -47,45 +43,40 @@ class PlaidService {
       StreamSubscription<LinkExit>? exitSubscription;
       StreamSubscription<LinkEvent>? eventSubscription;
 
+      // Completer to wait for Plaid Link to finish
+      final completer = Completer<bool>();
+
       try {
         // Listen to success events
         successSubscription = PlaidLink.onSuccess.listen((success) async {
           debugPrint('✅ Plaid Link Success!');
           debugPrint('   Public Token: ${success.publicToken.substring(0, 20)}...');
-          debugPrint('   Metadata: ${success.metadata}');
 
           // Step 3: Exchange public token for access token
           final accessToken = await exchangePublicToken(success.publicToken);
           
           if (accessToken != null) {
             debugPrint('✅ Access token received and stored');
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Bank account linked successfully! 🎉'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+            linkSuccessful = true;
+            if (!completer.isCompleted) {
+              completer.complete(true);
             }
           } else {
-            throw Exception('Failed to exchange token');
+            if (!completer.isCompleted) {
+              completer.complete(false);
+            }
           }
         });
 
         // Listen to exit events
         exitSubscription = PlaidLink.onExit.listen((exit) {
+          debugPrint('ℹ️ User exited Plaid Link');
           if (exit.error != null) {
             debugPrint('❌ Plaid Link Error: ${exit.error?.message}');
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Error: ${exit.error?.message ?? "Unknown error"}'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          } else {
-            debugPrint('ℹ️ User exited Plaid Link');
+          }
+          
+          if (!completer.isCompleted) {
+            completer.complete(false);
           }
         });
 
@@ -103,16 +94,21 @@ class PlaidService {
 
         // Step 4: Open Plaid Link UI
         await PlaidLink.open();
+        
+        // Wait for Plaid Link to complete (success or exit)
+        linkSuccessful = await completer.future.timeout(
+          const Duration(minutes: 5),
+          onTimeout: () => false,
+        );
       } finally {
-        // Clean up subscriptions after a delay to allow events to be processed
-        Future.delayed(const Duration(seconds: 5), () {
-          successSubscription?.cancel();
-          exitSubscription?.cancel();
-          eventSubscription?.cancel();
-        });
+        // Clean up subscriptions
+        await Future.delayed(const Duration(seconds: 1));
+        await successSubscription?.cancel();
+        await exitSubscription?.cancel();
+        await eventSubscription?.cancel();
       }
       
-      return true;
+      return linkSuccessful;
     } catch (e) {
       debugPrint('❌ Error linking bank account: $e');
       if (context.mounted) {

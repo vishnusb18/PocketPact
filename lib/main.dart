@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/test_screen.dart';
+import 'screens/pacty_demo_screen.dart';
 import 'package:pocket_pact/screens/dashboard_screen.dart';
 import 'package:pocket_pact/screens/create_pact_screen.dart';
 import 'package:pocket_pact/screens/pact_detail_screen.dart';
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const SplashScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/test': (context) => const TestScreen(),
+        '/pacty-demo': (context) => const PactyAnimationDemoScreen(),
         '/pact-detail': (context) => const PactDetailScreen(),
         '/create-pact': (context) => const CreatePactScreen(),
         '/profile': (context) => const ProfileScreen(),

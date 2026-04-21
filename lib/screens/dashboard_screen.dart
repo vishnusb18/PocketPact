@@ -4,10 +4,14 @@
 // set to (.88 <--> .12) so the preview of next slide peeks on screen before current scrolls away.
 // Provides navigation to create new pacts and add friends.
 // Shows weekly leaderboard (top 3).
+// Features Pacty mascot helper with motivational messages
 
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../widgets/common/bottom_nav_bar.dart';
+import '../widgets/common/pacty_helper.dart';
+import '../utils/pacty_messages.dart';
 
 // data model
 
@@ -85,6 +89,11 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pick a random motivational message from Pacty
+    final randomMessage = PactyMessages.dashboard[
+      Random().nextInt(PactyMessages.dashboard.length)
+    ];
+    
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -116,9 +125,22 @@ class DashboardScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 20),
+          padding: const EdgeInsets.only(top: 16),
           child: Column(
             children: [
+              // Pacty Helper - Motivational Message
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: PactyHelperCompact(
+                  message: randomMessage.message,
+                  emotion: randomMessage.emotion,
+                  onTap: () {
+                    // Could show more tips or navigate somewhere
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              
               _DashboardTopSection(goals: _sampleGoals),
               const SizedBox(height: 24),
               _LeaderboardSection(entries: _sampleLeaderboard),

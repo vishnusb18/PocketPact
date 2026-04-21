@@ -1,12 +1,16 @@
 // Link Bank Account Screen
 // Allows users to connect their bank account using Plaid
 // Shows connection status and provides option to link or unlink
+// Features Pacty mascot to reassure users about security
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../services/plaid_service.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../widgets/common/pacty_helper.dart';
+import '../utils/pacty_messages.dart';
 
 class LinkBankAccountScreen extends StatefulWidget {
   const LinkBankAccountScreen({super.key});
@@ -38,16 +42,44 @@ class _LinkBankAccountScreenState extends State<LinkBankAccountScreen> {
   Future<void> _linkAccount() async {
     setState(() => _isLoading = true);
     
-    final success = await _plaidService.linkBankAccount(
-      context: context,
-      userId: _userId,
-    );
+    try {
+      final success = await _plaidService.linkBankAccount(
+        context: context,
+        userId: _userId,
+      );
 
-    if (success) {
-      setState(() => _isLinked = true);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        
+        if (success) {
+          setState(() => _isLinked = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Bank account linked successfully! 🎉'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Bank linking cancelled or failed'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error in _linkAccount: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-    
-    setState(() => _isLoading = false);
   }
 
   Future<void> _unlinkAccount() async {
@@ -109,6 +141,15 @@ class _LinkBankAccountScreenState extends State<LinkBankAccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Pacty Helper - Security Reassurance
+                  if (!_isLinked) ...[
+                    PactyHelperCompact(
+                      message: PactyMessages.bankLinking[0].message,
+                      emotion: PactyMessages.bankLinking[0].emotion,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  
                   // Info Card
                   Container(
                     padding: const EdgeInsets.all(20),
