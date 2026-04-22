@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         useMaterial3: true,
       ),
-      initialRoute: '/',
+      initialRoute: '/dashboard',
       routes: {
         '/': (context) => const SplashScreen(),
         '/dashboard': (context) => const DashboardScreen(),
