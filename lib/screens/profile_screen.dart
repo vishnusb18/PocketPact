@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import 'calendar_screen.dart';
+import 'financial_allocation_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,14 +75,52 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // User Name
-          const Text(
-            'Alex Johnson',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textWhite,
-            ),
+          // User Name and Action Buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Alex Johnson',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textWhite,
+                ),
+              ),
+              const SizedBox(width: 12),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CalendarScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(
+                  Icons.calendar_today,
+                  color: AppColors.accentGold,
+                  size: 24,
+                ),
+                tooltip: 'View Spending Calendar',
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FinancialAllocationScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(
+                  Icons.analytics_outlined,
+                  color: AppColors.accentGold,
+                  size: 24,
+                ),
+                tooltip: 'View Financial Allocation',
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           // Subtitle
@@ -118,7 +163,7 @@ class ProfileScreen extends StatelessWidget {
               Expanded(
                 child: _buildStatCard(
                   icon: Icons.account_balance_wallet,
-                  value: '₹12,450',
+                  value: '\$12,450',
                   label: 'Total\nContributed',
                   color: AppColors.primaryPurple,
                 ),

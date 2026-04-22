@@ -1,0 +1,468 @@
+import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
+import '../models/spending.dart';
+import '../services/spending_service.dart';
+import '../theme/colors.dart';
+import '../theme/text_styles.dart';
+
+class CalendarScreen extends StatefulWidget {
+  const CalendarScreen({Key? key}) : super(key: key);
+
+  @override
+  State<CalendarScreen> createState() => _CalendarScreenState();
+}
+
+class _CalendarScreenState extends State<CalendarScreen> {
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  DailySpending? _selectedDaySpending;
+  final Map<DateTime, double> _spendingTotals = SpendingService.getAllSpendingTotals();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = _focusedDay;
+    _loadSelectedDaySpending();
+  }
+
+  void _loadSelectedDaySpending() {
+    if (_selectedDay != null) {
+      setState(() {
+        _selectedDaySpending = SpendingService.getSpendingForDate(_selectedDay!);
+      });
+    }
+  }
+
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    if (!isSameDay(_selectedDay, selectedDay)) {
+      setState(() {
+        _selectedDay = selectedDay;
+        _focusedDay = focusedDay;
+      });
+      _loadSelectedDaySpending();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      appBar: AppBar(
+        backgroundColor: AppColors.primaryPurple,
+        elevation: 0,
+        title: const Text(
+          'Spending Calendar',
+          style: TextStyle(
+            color: AppColors.textWhite,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textWhite),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Column(
+        children: [
+          _buildCalendar(),
+          Expanded(
+            child: _buildSpendingDetails(),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddSpendingDialog,
+        backgroundColor: AppColors.primaryPurple,
+        child: const Icon(Icons.add, color: AppColors.textWhite),
+      ),
+    );
+  }
+
+  Widget _buildCalendar() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TableCalendar(
+        firstDay: DateTime.utc(2020, 1, 1),
+        lastDay: DateTime.utc(2030, 12, 31),
+        focusedDay: _focusedDay,
+        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        onDaySelected: _onDaySelected,
+        onPageChanged: (focusedDay) {
+          setState(() {
+            _focusedDay = focusedDay;
+          });
+        },
+        calendarStyle: CalendarStyle(
+          selectedDecoration: const BoxDecoration(
+            color: AppColors.primaryPurple,
+            shape: BoxShape.circle,
+          ),
+          todayDecoration: BoxDecoration(
+            color: AppColors.primaryPurple.withOpacity(0.3),
+            shape: BoxShape.circle,
+          ),
+          markerDecoration: const BoxDecoration(
+            color: AppColors.accentGold,
+            shape: BoxShape.circle,
+          ),
+        ),
+        headerStyle: HeaderStyle(
+          formatButtonVisible: false,
+          titleCentered: true,
+          titleTextStyle: AppTextStyles.h3.copyWith(
+            color: AppColors.primaryPurple,
+          ),
+        ),
+        calendarBuilders: CalendarBuilders(
+          markerBuilder: (context, date, events) {
+            final spending = _spendingTotals[DateTime(date.year, date.month, date.day)];
+            if (spending != null && spending > 0) {
+              return Positioned(
+                right: 1,
+                bottom: 1,
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: AppColors.accentGold,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            }
+            return null;
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpendingDetails() {
+    if (_selectedDaySpending == null) {
+      return _buildEmptyState();
+    }
+
+    final categoryTotals = _selectedDaySpending!.getSpendingByCategory();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  DateFormat('EEEE, MMMM d').format(_selectedDay!),
+                  style: AppTextStyles.h3,
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryPurple.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "\$${_selectedDaySpending!.totalAmount.toStringAsFixed(2)}",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryPurple,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              children: [
+                // Category breakdown
+                ...categoryTotals.entries.map((entry) {
+                  final percentage = (entry.value / _selectedDaySpending!.totalAmount) * 100;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundWhite,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              entry.key,
+                              style: AppTextStyles.h4,
+                            ),
+                            Text(
+                              "\$${entry.value.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryPurple,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: entry.value / _selectedDaySpending!.totalAmount,
+                            backgroundColor: AppColors.grey200,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.primaryPurple,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 16),
+
+                // Individual transactions
+                Text(
+                  'Transactions',
+                  style: AppTextStyles.h4,
+                ),
+                const SizedBox(height: 12),
+
+                ..._selectedDaySpending!.entries.map((entry) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundWhite,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.grey200,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _getCategoryColor(entry.category).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _getCategoryIcon(entry.category),
+                            color: _getCategoryColor(entry.category),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry.description,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                entry.merchant,
+                                style: AppTextStyles.caption,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          "\$${entry.amount.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryPurple,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.account_balance_wallet_outlined,
+            size: 64,
+            color: AppColors.grey400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No spending recorded',
+            style: AppTextStyles.h4.copyWith(
+              color: AppColors.grey400,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You didn\'t spend anything on this day',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.grey400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddSpendingDialog() {
+    final amountController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final merchantController = TextEditingController();
+    String selectedCategory = 'Food & Dining';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add Spending'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: amountController,
+                decoration: const InputDecoration(labelText: 'Amount'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
+              TextField(
+                controller: merchantController,
+                decoration: const InputDecoration(labelText: 'Merchant'),
+              ),
+              DropdownButton<String>(
+                value: selectedCategory,
+                onChanged: (value) {
+                  setState(() {
+                    selectedCategory = value!;
+                  });
+                },
+                items: [
+                  'Food & Dining',
+                  'Transportation',
+                  'Shopping',
+                  'Entertainment',
+                  'Bills & Utilities',
+                  'Healthcare',
+                ].map((category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final amount = double.tryParse(amountController.text);
+                if (amount != null && amount > 0 && _selectedDay != null) {
+                  final entry = SpendingEntry(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    date: _selectedDay!,
+                    amount: amount,
+                    category: selectedCategory,
+                    description: descriptionController.text,
+                    merchant: merchantController.text,
+                  );
+                  SpendingService.addSpendingEntry(entry);
+                  _loadSelectedDaySpending();
+                  setState(() {});
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'food & dining':
+        return AppColors.success;
+      case 'transportation':
+        return AppColors.info;
+      case 'shopping':
+        return AppColors.warning;
+      case 'entertainment':
+        return AppColors.accentGoldDark;
+      case 'bills & utilities':
+        return AppColors.error;
+      case 'healthcare':
+        return AppColors.primaryPurple;
+      default:
+        return AppColors.grey500;
+    }
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'food & dining':
+        return Icons.restaurant;
+      case 'transportation':
+        return Icons.directions_car;
+      case 'shopping':
+        return Icons.shopping_bag;
+      case 'entertainment':
+        return Icons.movie;
+      case 'bills & utilities':
+        return Icons.receipt;
+      case 'healthcare':
+        return Icons.local_hospital;
+      default:
+        return Icons.category;
+    }
+  }
+}
