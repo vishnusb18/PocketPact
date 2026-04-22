@@ -1,27 +1,135 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../models/user.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
+import '../theme/app_design.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 import '../widgets/common/bottom_nav_bar.dart';
+import '../widgets/common/custom_button.dart';
+import '../widgets/common/pacty_widgets.dart';
+import '../utils/pacty_messages.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final _authService = AuthService();
+  final _userService = UserService();
+  AppUser? _userProfile;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final profile = await _userService.getCurrentUserProfile();
+      if (mounted) {
+        setState(() {
+          _userProfile = profile;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading profile: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleSignOut() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _authService.signOut();
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/auth');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        body: Center(child: CircularProgressIndicator()),
+        bottomNavigationBar: AppBottomNavBar(currentIndex: 1),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+            icon: const Icon(Icons.settings_outlined),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            AppSpacing.xl,
+          ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              const SizedBox(height: 24),
-              _buildQuickStats(),
-              const SizedBox(height: 24),
-              _buildAchievements(),
-              const SizedBox(height: 24),
-              _buildMyPactsPreview(),
-              const SizedBox(height: 24),
+              _ProfileHeader(
+                currentUser: currentUser,
+                userProfile: _userProfile,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _PactyProfileNote(userProfile: _userProfile),
+              const SizedBox(height: AppSpacing.lg),
+              _ProgressSection(userProfile: _userProfile),
+              const SizedBox(height: AppSpacing.lg),
+              _AchievementsSection(userProfile: _userProfile),
+              const SizedBox(height: AppSpacing.lg),
+              _MyPactsPreview(),
+              const SizedBox(height: AppSpacing.md),
+              CustomButton(
+                label: 'Sign Out',
+                icon: Icons.logout_rounded,
+                variant: CustomButtonVariant.outline,
+                onPressed: _handleSignOut,
+              ),
             ],
           ),
         ),
@@ -29,425 +137,592 @@ class ProfileScreen extends StatelessWidget {
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
     );
   }
+}
 
-  // Header Section
-  Widget _buildHeader() {
+class _ProfileHeader extends StatelessWidget {
+  final User? currentUser;
+  final AppUser? userProfile;
+
+  const _ProfileHeader({
+    required this.currentUser,
+    required this.userProfile,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName =
+        userProfile?.displayName ?? currentUser?.displayName ?? 'PocketPact User';
+    final email = currentUser?.email ?? 'No email connected';
+    final activePacts = userProfile?.activePacts ?? 0;
+    final initial = displayName.isNotEmpty ? displayName.substring(0, 1) : 'U';
+
     return Container(
-      decoration: const BoxDecoration(
-        gradient: AppColors.purpleGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+      width: double.infinity,
+      padding: AppInsets.cardLarge,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryPurpleDark,
+            AppColors.primaryPurple,
+            AppColors.primaryPurpleLight,
+          ],
         ),
+        borderRadius: BorderRadius.circular(AppRadii.xl),
+        boxShadow: AppShadows.card,
       ),
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Avatar
           Container(
+            width: 72,
+            height: 72,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
+              color: Colors.white,
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.accentGold,
-                width: 3,
+                color: AppColors.accentGold.withOpacity(0.82),
+                width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.14),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: const CircleAvatar(
-              radius: 50,
-              backgroundColor: AppColors.backgroundWhite,
-              child: Icon(
-                Icons.person,
-                size: 50,
+            child: Text(
+              initial.toUpperCase(),
+              style: AppTextStyles.h2.copyWith(
                 color: AppColors.primaryPurple,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          // User Name
-          const Text(
-            'Alex Johnson',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textWhite,
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Subtitle
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'Saving with 3 active pacts',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textWhite,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Quick Stats Section
-  Widget _buildQuickStats() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 12),
-            child: Text(
-              'Your Progress',
-              style: AppTextStyles.h3,
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.account_balance_wallet,
-                  value: '₹12,450',
-                  label: 'Total\nContributed',
-                  color: AppColors.primaryPurple,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.group,
-                  value: '3',
-                  label: 'Active\nPacts',
-                  color: AppColors.accentGoldDark,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.check_circle,
-                  value: '5',
-                  label: 'Completed\nPacts',
-                  color: AppColors.success,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Achievements Section
-  Widget _buildAchievements() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 12),
-            child: Text(
-              'Achievements',
-              style: AppTextStyles.h3,
-            ),
-          ),
-          Column(
-            children: [
-              _buildAchievementCard(
-                icon: Icons.emoji_events,
-                title: 'First Pact Joined',
-                description: 'Started your saving journey',
-                isUnlocked: true,
-              ),
-              const SizedBox(height: 12),
-              _buildAchievementCard(
-                icon: Icons.trending_up,
-                title: 'Consistent Contributor',
-                description: 'Made contributions for 30 days straight',
-                isUnlocked: true,
-              ),
-              const SizedBox(height: 12),
-              _buildAchievementCard(
-                icon: Icons.stars,
-                title: 'Goal Crusher',
-                description: 'Completed 5 pacts successfully',
-                isUnlocked: true,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAchievementCard({
-    required IconData icon,
-    required String title,
-    required String description,
-    required bool isUnlocked,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isUnlocked
-              ? AppColors.accentGold.withOpacity(0.3)
-              : AppColors.grey200,
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: isUnlocked
-                  ? AppColors.goldGradient
-                  : const LinearGradient(
-                      colors: [AppColors.grey200, AppColors.grey300],
-                    ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: AppColors.textWhite,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.h3.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white.withOpacity(0.78),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.16),
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
+                    border: Border.all(color: Colors.white.withOpacity(0.16)),
+                  ),
+                  child: Text(
+                    activePacts > 0
+                        ? 'Saving with $activePacts active ${activePacts == 1 ? "pact" : "pacts"}'
+                        : 'Ready to start saving',
+                    style: AppTextStyles.caption.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PactyProfileNote extends StatelessWidget {
+  final AppUser? userProfile;
+
+  const _PactyProfileNote({required this.userProfile});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalContributed = userProfile?.totalContributed ?? 0.0;
+    final message = totalContributed > 0
+        ? 'You have contributed \$${totalContributed.toStringAsFixed(0)} so far. Nice momentum.'
+        : PactyMessages.profile.first.message;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const PactyReactionWidget(
+          emotion: PactyEmotion.happy,
+          size: 72,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(child: PactyMessageBubble(message: message)),
+      ],
+    );
+  }
+}
+
+class _ProgressSection extends StatelessWidget {
+  final AppUser? userProfile;
+
+  const _ProgressSection({required this.userProfile});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalContributed = userProfile?.totalContributed ?? 0.0;
+    final activePacts = userProfile?.activePacts ?? 0;
+    final completedPacts = userProfile?.completedPacts ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle(
+          title: 'Your Progress',
+          subtitle: 'A quick snapshot of your saving activity',
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: _ProfileStatCard(
+                icon: Icons.savings_outlined,
+                value: '\$${totalContributed.toStringAsFixed(0)}',
+                label: 'Contributed',
+                color: AppColors.primaryPurple,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _ProfileStatCard(
+                icon: Icons.group_outlined,
+                value: '$activePacts',
+                label: 'Active pacts',
+                color: AppColors.info,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _ProfileStatCard(
+                icon: Icons.check_circle_outline_rounded,
+                value: '$completedPacts',
+                label: 'Completed',
+                color: AppColors.success,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        _SavingsSummary(
+          activePacts: activePacts,
+          completedPacts: completedPacts,
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileStatCard extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _ProfileStatCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 132),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(color: AppColors.grey200),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppRadii.md),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const Spacer(),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: AppTextStyles.h3.copyWith(
+                color: color,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SavingsSummary extends StatelessWidget {
+  final int activePacts;
+  final int completedPacts;
+
+  const _SavingsSummary({
+    required this.activePacts,
+    required this.completedPacts,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: AppInsets.card,
+      decoration: BoxDecoration(
+        color: AppColors.lavenderMist,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(color: AppColors.primaryPurple.withOpacity(0.12)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppRadii.md),
+            ),
+            child: const Icon(
+              Icons.local_fire_department_outlined,
+              color: AppColors.primaryPurple,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  activePacts > 0 ? 'Contribution streak building' : 'Start your first streak',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 13,
+                  '$activePacts active, $completedPacts completed pacts',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AchievementsSection extends StatelessWidget {
+  final AppUser? userProfile;
+
+  const _AchievementsSection({required this.userProfile});
+
+  @override
+  Widget build(BuildContext context) {
+    final completedPacts = userProfile?.completedPacts ?? 0;
+    final totalContributed = userProfile?.totalContributed ?? 0;
+    final activePacts = userProfile?.activePacts ?? 0;
+
+    final achievements = [
+      _Achievement(
+        icon: Icons.flag_outlined,
+        title: 'First Pact',
+        description: 'Joined your first savings pact',
+        isUnlocked: activePacts > 0 || completedPacts > 0,
+      ),
+      _Achievement(
+        icon: Icons.trending_up_rounded,
+        title: 'Consistent Contributor',
+        description: 'Contributed more than \$1,000',
+        isUnlocked: totalContributed > 1000,
+      ),
+      _Achievement(
+        icon: Icons.workspace_premium_outlined,
+        title: 'Goal Crusher',
+        description: 'Completed 5 pacts successfully',
+        isUnlocked: completedPacts >= 5,
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle(
+          title: 'Achievements',
+          subtitle: 'Milestones that mark your savings journey',
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        ...achievements.map(
+          (achievement) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: _AchievementTile(achievement: achievement),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AchievementTile extends StatelessWidget {
+  final _Achievement achievement;
+
+  const _AchievementTile({required this.achievement});
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        achievement.isUnlocked ? AppColors.accentGoldDark : AppColors.grey400;
+
+    return Container(
+      padding: AppInsets.card,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(
+          color: achievement.isUnlocked
+              ? AppColors.accentGold.withOpacity(0.24)
+              : AppColors.grey200,
+        ),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(AppRadii.md),
+            ),
+            child: Icon(achievement.icon, color: color, size: 24),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  achievement.title,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  achievement.description,
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-          if (isUnlocked)
-            const Icon(
-              Icons.check_circle,
-              color: AppColors.accentGold,
-              size: 24,
+          const SizedBox(width: AppSpacing.sm),
+          Icon(
+            achievement.isUnlocked
+                ? Icons.check_circle_rounded
+                : Icons.lock_outline_rounded,
+            color: color,
+            size: 22,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MyPactsPreview extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    const pacts = [
+      _PactPreview('Summer Vacation Fund', 0.75, AppColors.primaryPurple),
+      _PactPreview('New Laptop Savings', 0.45, AppColors.accentGoldDark),
+      _PactPreview('Emergency Fund', 0.60, AppColors.info),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Expanded(
+              child: _SectionTitle(
+                title: 'My Pacts',
+                subtitle: 'Recent goals you are tracking',
+              ),
             ),
-        ],
-      ),
+            TextButton(
+              onPressed: () {},
+              child: const Text('View All'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        ...pacts.map(
+          (pact) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: _PactPreviewTile(pact: pact),
+          ),
+        ),
+      ],
     );
   }
+}
 
-  // My Pacts Preview Section
-  Widget _buildMyPactsPreview() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'My Pacts',
-                style: AppTextStyles.h3,
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text(
-                  'View All',
-                  style: TextStyle(
-                    color: AppColors.primaryPurple,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _buildPactPreviewCard(
-            pactName: 'Summer Vacation Fund',
-            progress: 0.75,
-            progressText: '75%',
-            color: AppColors.primaryPurple,
-          ),
-          const SizedBox(height: 12),
-          _buildPactPreviewCard(
-            pactName: 'New Laptop Savings',
-            progress: 0.45,
-            progressText: '45%',
-            color: AppColors.accentGoldDark,
-          ),
-          const SizedBox(height: 12),
-          _buildPactPreviewCard(
-            pactName: 'Emergency Fund',
-            progress: 0.60,
-            progressText: '60%',
-            color: AppColors.info,
-          ),
-        ],
-      ),
-    );
-  }
+class _PactPreviewTile extends StatelessWidget {
+  final _PactPreview pact;
 
-  Widget _buildPactPreviewCard({
-    required String pactName,
-    required double progress,
-    required String progressText,
-    required Color color,
-  }) {
+  const _PactPreviewTile({required this.pact});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: AppInsets.card,
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(color: AppColors.grey200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Text(
-                  pactName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                  pact.name,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  progressText,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
+              Text(
+                '${(pact.progress * 100).toStringAsFixed(0)}%',
+                style: AppTextStyles.caption.copyWith(
+                  color: pact.color,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadii.pill),
             child: LinearProgressIndicator(
-              value: progress,
+              value: pact.progress,
               minHeight: 8,
-              backgroundColor: AppColors.grey200,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
+              backgroundColor: AppColors.grey100,
+              valueColor: AlwaysStoppedAnimation<Color>(pact.color),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SectionTitle({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: AppTextStyles.h3),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          subtitle,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Achievement {
+  final IconData icon;
+  final String title;
+  final String description;
+  final bool isUnlocked;
+
+  const _Achievement({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.isUnlocked,
+  });
+}
+
+class _PactPreview {
+  final String name;
+  final double progress;
+  final Color color;
+
+  const _PactPreview(this.name, this.progress, this.color);
 }

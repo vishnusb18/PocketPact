@@ -15,6 +15,8 @@ class AppColors {
   static const Color backgroundLight = Color(0xFFF8F9FA);
   static const Color backgroundWhite = Color(0xFFFFFFFF);
   static const Color surfaceLight = Color(0xFFF3F4F6);
+  static const Color lavenderMist = Color(0xFFF4ECFB);
+  static const Color lavenderCard = Color(0xFFE9D8F7);
   
   // Text Colors
   static const Color textPrimary = Color(0xFF1F2937);
@@ -34,6 +36,7 @@ class AppColors {
   static const Color grey300 = Color(0xFFD1D5DB);
   static const Color grey400 = Color(0xFF9CA3AF);
   static const Color grey500 = Color(0xFF6B7280);
+  static const Color grey700 = Color(0xFF374151);
   
   // Gradient Colors
   static const LinearGradient purpleGradient = LinearGradient(

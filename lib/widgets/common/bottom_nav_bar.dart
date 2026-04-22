@@ -65,7 +65,7 @@ class AppBottomNavBar extends StatelessWidget {
     switch (index) {
       case 0:
         // Home/Dashboard
-        Navigator.pushReplacementNamed(context, '/');
+        Navigator.pushReplacementNamed(context, '/dashboard');
         break;
       case 1:
         // Profile
