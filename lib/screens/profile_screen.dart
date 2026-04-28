@@ -89,6 +89,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
+    final mockUser = currentUser == null
+        ? AppUser(
+            uid: 'mock',
+            email: 'jane.doe@example.com',
+            displayName: 'Jane Doe',
+            totalContributed: 340.0,
+            activePacts: 3,
+            completedPacts: 2,
+            createdAt: DateTime(2025, 1, 15),
+          )
+        : null;
+    final effectiveProfile = _userProfile ?? mockUser;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(

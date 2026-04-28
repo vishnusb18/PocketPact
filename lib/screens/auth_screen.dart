@@ -242,7 +242,20 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 8),
+                    // Dev bypass button
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushReplacementNamed('/dashboard');
+                        },
+                        child: const Text(
+                          'Skip (Dev Mode)',
+                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     // Terms and Privacy Policy
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),

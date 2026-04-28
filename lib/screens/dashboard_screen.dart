@@ -82,6 +82,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   late final PactyMessage _message;
 
   @override
@@ -125,12 +126,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final initial = _userInitial(currentUser?.email);
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.backgroundLight,
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: AppColors.primaryPurple),
+              child: Text(
+                'PocketPact',
+                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.dashboard_rounded),
+              title: const Text('Dashboard'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, '/dashboard');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_rounded),
+              title: const Text('Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/profile');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_circle_outline_rounded),
+              title: const Text('Create Pact'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/create-pact');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_add_alt_1_rounded),
+              title: const Text('Add Friends'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/add-friends');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.account_balance_rounded),
+              title: const Text('Link Bank Account'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/link-bank-account');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/settings');
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout_rounded),
+              title: const Text('Sign Out'),
+              onTap: () {
+                Navigator.pop(context);
+                _handleSignOut(context);
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         title: const Text('PocketPact'),
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
-          onPressed: () {},
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         actions: [
           IconButton(
