@@ -50,4 +50,10 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // Aliases for backward compatibility
+  static const Color primary = primaryPurple;
+  static const Color lightGrey = grey200;
+  static const Color greyText = textSecondary;
+  static const Color darkText = textPrimary;
 }

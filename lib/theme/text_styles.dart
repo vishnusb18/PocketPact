@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'colors.dart';
 
-class AppTextStyles {
+class TextStyles {
   // Heading Styles
   static const TextStyle h1 = TextStyle(
     fontSize: 32,
@@ -84,4 +84,13 @@ class AppTextStyles {
     fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
   );
+
+  // Aliases for backward compatibility
+  static const TextStyle heading1 = h1;
+  static const TextStyle heading2 = h2;
+  static const TextStyle heading3 = h3;
+  static const TextStyle body = bodyLarge;
 }
+
+// Alias for backward compatibility with old class name
+typedef AppTextStyles = TextStyles;

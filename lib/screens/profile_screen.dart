@@ -1,15 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/user.dart';
+import '../models/risk_profile.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../services/risk_profile_service.dart';
 import '../theme/app_design.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 import '../widgets/common/bottom_nav_bar.dart';
 import '../widgets/common/custom_button.dart';
 import '../widgets/common/pacty_widgets.dart';
+import '../widgets/risk_profile_badge.dart';
 import '../utils/pacty_messages.dart';
+import 'risk_profile_questionnaire_screen.dart';
+import 'risk_profile_results_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,13 +26,16 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _authService = AuthService();
   final _userService = UserService();
+  final _riskProfileService = RiskProfileService();
   AppUser? _userProfile;
+  RiskProfile? _riskProfile;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadRiskProfile();
   }
 
   Future<void> _loadUserProfile() async {
@@ -46,6 +54,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SnackBar(content: Text('Error loading profile: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _loadRiskProfile() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final profile = await _riskProfileService.getRiskProfile(user.uid);
+        if (mounted) {
+          setState(() {
+            _riskProfile = profile;
+          });
+        }
+      }
+    } catch (e) {
+      // Risk profile might not exist yet, which is fine
+      debugPrint('Error loading risk profile: $e');
+    }
+  }
+
+  Future<void> _startRiskAssessment() async {
+    final result = await Navigator.push<RiskProfile>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const RiskProfileQuestionnaireScreen(),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _riskProfile = result;
+      });
     }
   }
 
@@ -117,6 +157,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
               _PactyProfileNote(userProfile: _userProfile),
+              const SizedBox(height: AppSpacing.lg),
+              if (_riskProfile != null)
+                _RiskProfileSection(
+                  riskProfile: _riskProfile!,
+                  onRetake: _startRiskAssessment,
+                )
+              else
+                _RiskProfilePrompt(onStart: _startRiskAssessment),
               const SizedBox(height: AppSpacing.lg),
               _ProgressSection(userProfile: _userProfile),
               const SizedBox(height: AppSpacing.lg),
@@ -701,6 +749,175 @@ class _SectionTitle extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Risk Profile Section - Shows existing profile
+class _RiskProfileSection extends StatelessWidget {
+  final RiskProfile riskProfile;
+  final VoidCallback? onRetake;
+
+  const _RiskProfileSection({
+    required this.riskProfile,
+    this.onRetake,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle(
+          title: 'Financial Risk Profile',
+          subtitle: 'Your personalized financial assessment',
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        GestureDetector(
+          onTap: () => showDialog(
+            context: context,
+            builder: (context) => RiskProfilePopup(
+              profile: riskProfile,
+              onRetake: onRetake,
+            ),
+          ),
+          child: Container(
+            padding: AppInsets.card,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppRadii.lg),
+              border: Border.all(color: AppColors.grey200),
+              boxShadow: AppShadows.soft,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          RiskProfileBadge(profile: riskProfile),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            riskProfile.riskCategory.description,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          'Risk Score',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          '${riskProfile.riskScore.toStringAsFixed(0)}%',
+                          style: AppTextStyles.h3,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                RiskScoreIndicator(score: riskProfile.riskScore),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Tap to view detailed recommendations',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Risk Profile Prompt - Invites user to take assessment
+class _RiskProfilePrompt extends StatelessWidget {
+  final VoidCallback onStart;
+
+  const _RiskProfilePrompt({required this.onStart});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: AppInsets.card,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withOpacity(0.1),
+            AppColors.primary.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(
+          color: AppColors.primary.withOpacity(0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '📊',
+                style: AppTextStyles.h2,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Assess Your Financial Risk',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      'Take a quick 5-question assessment to get personalized financial recommendations',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onStart,
+              icon: const Icon(Icons.arrow_forward),
+              label: const Text('Start Assessment'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
