@@ -201,34 +201,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       appBar: AppBar(
         title: const Text('PocketPact'),
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: AppColors.textSecondary),
-            onPressed: () => _handleSignOut(context),
-            tooltip: 'Sign Out',
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.sm),
-            child: GestureDetector(
-              onTap: () => Navigator.pushNamed(context, '/profile'),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: AppColors.primaryPurple.withOpacity(0.12),
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primaryPurple,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: SingleChildScrollView(

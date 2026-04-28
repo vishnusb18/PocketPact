@@ -126,14 +126,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               _ProfileHeader(
                 currentUser: currentUser,
-                userProfile: _userProfile,
+                userProfile: effectiveProfile,
               ),
               const SizedBox(height: AppSpacing.md),
-              _PactyProfileNote(userProfile: _userProfile),
+              _PactyProfileNote(userProfile: effectiveProfile),
               const SizedBox(height: AppSpacing.lg),
-              _ProgressSection(userProfile: _userProfile),
+              _ProgressSection(userProfile: effectiveProfile),
               const SizedBox(height: AppSpacing.lg),
-              _AchievementsSection(userProfile: _userProfile),
+              _AchievementsSection(userProfile: effectiveProfile),
               const SizedBox(height: AppSpacing.lg),
               _MyPactsPreview(),
               const SizedBox(height: AppSpacing.md),
@@ -165,7 +165,7 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayName =
         userProfile?.displayName ?? currentUser?.displayName ?? 'PocketPact User';
-    final email = currentUser?.email ?? 'No email connected';
+    final email = currentUser?.email ?? userProfile?.email ?? 'No email connected';
     final activePacts = userProfile?.activePacts ?? 0;
     final initial = displayName.isNotEmpty ? displayName.substring(0, 1) : 'U';
 
