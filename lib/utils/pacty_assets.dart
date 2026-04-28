@@ -20,12 +20,12 @@ class PactyAssets {
         return '${_basePath}pacty_thinking.png';
       case PactyEmotion.celebrating:
       case PactyEmotion.goalAchieved:
-        return '${_basePath}Pacty_win.png';
+        return '${_basePath}pacty_win.png';
       case PactyEmotion.determined:
       case PactyEmotion.tracking:
-        return '${_basePath}Pacty_trend.png';
+        return '${_basePath}pacty_win.png';
       case PactyEmotion.sad:
-        return '${_basePath}Pacty_sad.png';
+        return '${_basePath}pacty_sad.png';
       case PactyEmotion.splitting:
       case PactyEmotion.locking:
       case PactyEmotion.saving:
@@ -37,7 +37,7 @@ class PactyAssets {
   static String getFallback() => _fallback;
 
   // Get sad Pacty (for error states)
-  static String getSad() => '${_basePath}Pacty_sad.png';
+  static String getSad() => '${_basePath}pacty_sad.png';
 
   static String getImageForProgress(double progress) {
     if (progress >= 0.8) return getImageForEmotion(PactyEmotion.celebrating);
@@ -55,9 +55,8 @@ class PactyAssets {
       '${_basePath}pacty_mascot.png',
       '${_basePath}pacty_happy.png',
       '${_basePath}pacty_thinking.png',
-      '${_basePath}Pacty_sad.png',
-      '${_basePath}Pacty_trend.png',
-      '${_basePath}Pacty_win.png',
+      '${_basePath}pacty_sad.png',
+      '${_basePath}pacty_win.png',
     ];
   }
 }

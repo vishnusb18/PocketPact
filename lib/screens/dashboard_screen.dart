@@ -514,6 +514,13 @@ class _LeaderboardSection extends StatelessWidget {
                   ],
                 ),
               ),
+              Image.asset(
+                'assets/pacty_win.png',
+                width: 52,
+                height: 52,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(width: AppSpacing.xs),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm,

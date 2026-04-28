@@ -135,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   children: [
                     Image.asset(
-                      'assets/pacty_happy.png',
+                      'assets/pacty_thinking.png',
                       width: 112,
                       height: 112,
                       fit: BoxFit.contain,
