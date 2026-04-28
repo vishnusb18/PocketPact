@@ -22,12 +22,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _authService = AuthService();
   final _userService = UserService();
   AppUser? _userProfile;
-  bool _isLoading = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    if (FirebaseAuth.instance.currentUser != null) {
+      _isLoading = true;
+      _loadUserProfile();
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -390,7 +393,7 @@ class _ProfileStatCard extends StatelessWidget {
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          const Spacer(),
+          const SizedBox(height: AppSpacing.md),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
