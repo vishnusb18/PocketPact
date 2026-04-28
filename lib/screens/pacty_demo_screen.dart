@@ -116,21 +116,21 @@ class _PactyAnimationDemoScreenState extends State<PactyAnimationDemoScreen> {
 
               const SizedBox(height: 16),
 
-              PactyHelperCompact(
+              const PactyHelperCompact(
                 message: 'Great job! You\'re on track! 🎯',
                 emotion: PactyEmotion.happy,
               ),
 
               const SizedBox(height: 12),
 
-              PactyHelperCompact(
+              const PactyHelperCompact(
                 message: 'Link your bank to track savings automatically!',
                 emotion: PactyEmotion.thinking,
               ),
 
               const SizedBox(height: 12),
 
-              PactyHelperCompact(
+              const PactyHelperCompact(
                 message: 'Amazing! You completed your goal! 🏆',
                 emotion: PactyEmotion.goalAchieved,
               ),

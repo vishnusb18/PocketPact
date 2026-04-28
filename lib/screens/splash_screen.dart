@@ -64,17 +64,17 @@ class _SplashScreenState extends State<SplashScreen>
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Positioned(
+            const Positioned(
               top: 86,
               right: 38,
               child: _SparkleDot(size: 10, opacity: 0.32),
             ),
-            Positioned(
+            const Positioned(
               top: 150,
               left: 34,
               child: _SparkleDot(size: 14, opacity: 0.22),
             ),
-            Positioned(
+            const Positioned(
               bottom: 174,
               right: 56,
               child: _SparkleDot(size: 8, opacity: 0.28),

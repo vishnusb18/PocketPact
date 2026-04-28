@@ -2,7 +2,7 @@ import '../models/spending.dart';
 
 class SpendingService {
   // Mock data for demonstration
-  static List<SpendingEntry> _mockSpendingData = [
+  static final List<SpendingEntry> _mockSpendingData = [
     // Today's spending
     SpendingEntry(
       id: '1',
@@ -32,7 +32,7 @@ class SpendingService {
     // Yesterday's spending
     SpendingEntry(
       id: '4',
-      date: DateTime.now().subtract(Duration(days: 1)),
+      date: DateTime.now().subtract(const Duration(days: 1)),
       amount: 45.00,
       category: 'Food & Dining',
       description: 'Dinner at Italian Restaurant',
@@ -40,7 +40,7 @@ class SpendingService {
     ),
     SpendingEntry(
       id: '5',
-      date: DateTime.now().subtract(Duration(days: 1)),
+      date: DateTime.now().subtract(const Duration(days: 1)),
       amount: 8.50,
       category: 'Transportation',
       description: 'Bus fare',
@@ -50,7 +50,7 @@ class SpendingService {
     // Two days ago
     SpendingEntry(
       id: '6',
-      date: DateTime.now().subtract(Duration(days: 2)),
+      date: DateTime.now().subtract(const Duration(days: 2)),
       amount: 150.00,
       category: 'Entertainment',
       description: 'Movie tickets and popcorn',
@@ -58,7 +58,7 @@ class SpendingService {
     ),
     SpendingEntry(
       id: '7',
-      date: DateTime.now().subtract(Duration(days: 2)),
+      date: DateTime.now().subtract(const Duration(days: 2)),
       amount: 67.89,
       category: 'Shopping',
       description: 'Groceries',
@@ -68,7 +68,7 @@ class SpendingService {
     // More mock data for the past week
     SpendingEntry(
       id: '8',
-      date: DateTime.now().subtract(Duration(days: 3)),
+      date: DateTime.now().subtract(const Duration(days: 3)),
       amount: 32.50,
       category: 'Food & Dining',
       description: 'Coffee and pastry',
@@ -76,7 +76,7 @@ class SpendingService {
     ),
     SpendingEntry(
       id: '9',
-      date: DateTime.now().subtract(Duration(days: 4)),
+      date: DateTime.now().subtract(const Duration(days: 4)),
       amount: 120.00,
       category: 'Bills & Utilities',
       description: 'Electricity bill',
@@ -84,7 +84,7 @@ class SpendingService {
     ),
     SpendingEntry(
       id: '10',
-      date: DateTime.now().subtract(Duration(days: 5)),
+      date: DateTime.now().subtract(const Duration(days: 5)),
       amount: 75.00,
       category: 'Healthcare',
       description: 'Doctor visit',
@@ -95,10 +95,10 @@ class SpendingService {
   // Get spending data for a specific date
   static DailySpending? getSpendingForDate(DateTime date) {
     final dayStart = DateTime(date.year, date.month, date.day);
-    final dayEnd = dayStart.add(Duration(days: 1));
+    final dayEnd = dayStart.add(const Duration(days: 1));
 
     final entries = _mockSpendingData.where((entry) {
-      return entry.date.isAfter(dayStart.subtract(Duration(seconds: 1))) &&
+      return entry.date.isAfter(dayStart.subtract(const Duration(seconds: 1))) &&
              entry.date.isBefore(dayEnd);
     }).toList();
 
@@ -124,8 +124,8 @@ class SpendingService {
     final Map<DateTime, List<SpendingEntry>> groupedEntries = {};
 
     for (final entry in _mockSpendingData) {
-      if (entry.date.isAfter(start.subtract(Duration(days: 1))) &&
-          entry.date.isBefore(end.add(Duration(days: 1)))) {
+      if (entry.date.isAfter(start.subtract(const Duration(days: 1))) &&
+          entry.date.isBefore(end.add(const Duration(days: 1)))) {
         final dateKey = DateTime(entry.date.year, entry.date.month, entry.date.day);
         groupedEntries[dateKey] = (groupedEntries[dateKey] ?? [])..add(entry);
       }

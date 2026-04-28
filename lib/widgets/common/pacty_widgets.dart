@@ -118,7 +118,7 @@ class PactyReactionWidget extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         if (isCelebrating && animate)
-          PactyParticles(
+          const PactyParticles(
             particleCount: 12,
             particleColor: AppColors.accentGold,
             particleIcon: Icons.star_rounded,

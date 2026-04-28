@@ -7,7 +7,7 @@ import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({Key? key}) : super(key: key);
+  const CalendarScreen({super.key});
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -178,7 +178,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                   child: Text(
                     "\$${_selectedDaySpending!.totalAmount.toStringAsFixed(2)}",
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryPurple,
@@ -220,7 +220,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             ),
                             Text(
                               "\$${entry.value.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)",
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.primaryPurple,
@@ -247,7 +247,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 const SizedBox(height: 16),
 
                 // Individual transactions
-                Text(
+                const Text(
                   'Transactions',
                   style: AppTextStyles.h4,
                 ),
@@ -300,7 +300,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         ),
                         Text(
                           "\$${entry.amount.toStringAsFixed(2)}",
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: AppColors.primaryPurple,
@@ -323,7 +323,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.account_balance_wallet_outlined,
             size: 64,
             color: AppColors.grey400,

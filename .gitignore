@@ -1,4 +1,8 @@
+# Personal Agentic setup
+*.claude
+
 # Miscellaneous
+venv
 *.class
 *.log
 *.pyc

@@ -456,7 +456,7 @@ class _LeaderboardSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Leaderboard', style: AppTextStyles.h3),
+                    const Text('Leaderboard', style: AppTextStyles.h3),
                     const SizedBox(height: AppSpacing.xxs),
                     Text(
                       'Top savers this week',

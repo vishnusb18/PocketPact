@@ -3,7 +3,6 @@
 // Shows connection status and provides option to link or unlink
 // Features Pacty mascot to reassure users about security
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../services/plaid_service.dart';

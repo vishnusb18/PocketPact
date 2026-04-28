@@ -11,7 +11,7 @@ class TestScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            const Text(
               'TEST SCREEN',
               style: TextStyle(
                 color: Colors.white,
@@ -19,12 +19,12 @@ class TestScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.pushReplacementNamed(context, '/dashboard');
               },
-              child: Text('Go to Dashboard'),
+              child: const Text('Go to Dashboard'),
             ),
           ],
         ),

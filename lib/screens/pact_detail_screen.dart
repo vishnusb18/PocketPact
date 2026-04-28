@@ -81,7 +81,7 @@ class PactDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = (currentAmount / goalAmount).clamp(0.0, 1.0);
-    final remaining = goalAmount - currentAmount;
+    const remaining = goalAmount - currentAmount;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -192,7 +192,7 @@ class _SummaryCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    _StatusPill(text: '${PactDetailScreen.daysRemaining} days left'),
+                    const _StatusPill(text: '${PactDetailScreen.daysRemaining} days left'),
                   ],
                 ),
               ),
@@ -330,7 +330,7 @@ class _ProgressCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Progress', style: AppTextStyles.h3),
+              const Text('Progress', style: AppTextStyles.h3),
               Text(
                 '${percentage.toStringAsFixed(0)}%',
                 style: AppTextStyles.h3.copyWith(
@@ -649,7 +649,7 @@ class _InitialAvatar extends StatelessWidget {
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
         gradient: AppColors.purpleGradient,
       ),

@@ -5,7 +5,7 @@ import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 
 class FinancialAllocationScreen extends StatefulWidget {
-  const FinancialAllocationScreen({Key? key}) : super(key: key);
+  const FinancialAllocationScreen({super.key});
 
   @override
   State<FinancialAllocationScreen> createState() =>
@@ -151,7 +151,7 @@ class _FinancialAllocationScreenState extends State<FinancialAllocationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Allocation Breakdown',
           style: AppTextStyles.h3,
         ),
@@ -275,7 +275,7 @@ class _FinancialAllocationScreenState extends State<FinancialAllocationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Key Insights',
           style: AppTextStyles.h3,
         ),
@@ -297,7 +297,7 @@ class _FinancialAllocationScreenState extends State<FinancialAllocationScreen> {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.lightbulb_outline,
             color: AppColors.primaryPurple,
             size: 24,
@@ -318,7 +318,7 @@ class _FinancialAllocationScreenState extends State<FinancialAllocationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Recommendations',
           style: AppTextStyles.h3,
         ),
@@ -340,7 +340,7 @@ class _FinancialAllocationScreenState extends State<FinancialAllocationScreen> {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.thumb_up_outlined,
             color: AppColors.accentGoldDark,
             size: 24,
