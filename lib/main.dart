@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
       title: 'PocketPact',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: '/',
+      initialRoute: '/dashboard',
       routes: {
         '/': (context) => const SplashScreen(),
         '/dashboard': (context) => const DashboardScreen(),
