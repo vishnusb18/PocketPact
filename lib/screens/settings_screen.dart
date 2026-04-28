@@ -1,132 +1,258 @@
 import 'package:flutter/material.dart';
+import '../theme/app_design.dart';
+import '../theme/colors.dart';
+import '../theme/text_styles.dart';
 import '../widgets/common/bottom_nav_bar.dart';
-import '../services/auth_service.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
-  Future<void> _handleLogout(BuildContext context) async {
-    // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _notificationsEnabled = true;
+
+  void _showInfoDialog(BuildContext context, String title, String message) {
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+        title: Text(title),
+        content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
           ),
         ],
       ),
     );
-
-    if (confirmed == true && context.mounted) {
-      final authService = AuthService();
-      await authService.signOut();
-      
-      // Navigate to auth screen and remove all previous routes
-      if (context.mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.backgroundLight,
         elevation: 0,
-        // The back arrow from your mockup
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
+        automaticallyImplyLeading: false,
+        title: const Text('Settings'),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.xs,
+          AppSpacing.md,
+          AppSpacing.xl,
+        ),
+        child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
-              _buildSectionHeader("Account"),
-              _buildSettingItem(
-                context, 
-                Icons.account_balance, 
-                "Link Bank Account",
-                () => Navigator.pushNamed(context, '/link-bank-account'),
+              const _SectionTitle(
+                title: 'Preferences',
+                subtitle: 'Customize your app experience',
               ),
-              _buildSettingItem(context, Icons.person_outline, "My Profile"),
-              _buildSettingItem(context, Icons.info_outline, "App Information"),
-              _buildSettingItem(context, Icons.notifications_none, "Notifications"),
-              _buildSettingItem(context, Icons.lock_outline, "Privacy"),
-              
-              const SizedBox(height: 30),
-              _buildSectionHeader("Support & About"),
-              _buildSettingItem(context, Icons.credit_card, "My Achievements"),
-              _buildSettingItem(context, Icons.help_outline, "Help & Support"),
-              _buildSettingItem(context, Icons.article_outlined, "Terms and Policies"),
-              
-              const SizedBox(height: 30),
-              _buildSectionHeader("Customization"),
-              _buildSettingItem(context, Icons.delete_outline, "Dark Mode"),
-              _buildSettingItem(context, Icons.electric_bolt_outlined, "Energy Saver"),
-              
-              const SizedBox(height: 30),
-              _buildSectionHeader("Actions"),
-              _buildSettingItem(context, Icons.flag_outlined, "Report a problem"),
-              _buildSettingItem(context, Icons.group_add_outlined, "Add account"),
-              _buildSettingItem(
-                context,
-                Icons.logout,
-                "Log out",
-                () => _handleLogout(context),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundWhite,
+                  borderRadius: BorderRadius.circular(AppRadii.lg),
+                  border: Border.all(color: AppColors.grey200),
+                  boxShadow: AppShadows.soft,
+                ),
+                child: Column(
+                  children: [
+                    SwitchListTile.adaptive(
+                      value: _notificationsEnabled,
+                      onChanged: (value) {
+                        setState(() => _notificationsEnabled = value);
+                      },
+                      title: Text(
+                        'Notifications',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _notificationsEnabled
+                            ? 'Get reminders and progress updates'
+                            : 'Notification alerts are turned off',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                      secondary: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryPurple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppRadii.md),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_none,
+                          color: AppColors.primaryPurple,
+                          size: 20,
+                        ),
+                      ),
+                      activeColor: AppColors.primaryPurple,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.xxs,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: AppSpacing.lg),
+              const _SectionTitle(
+                title: 'General & Legal',
+                subtitle: 'Issue reporting and policy details',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _SettingsCard(
+                children: [
+                  _buildSettingItem(
+                    context,
+                    Icons.flag_outlined,
+                    'Report a Problem',
+                    () => _showInfoDialog(
+                      context,
+                      'Report a Problem',
+                      'Please email support@pocketpact.app with steps to reproduce the issue.',
+                    ),
+                  ),
+                  _buildSettingItem(
+                    context,
+                    Icons.article_outlined,
+                    'Terms and Policies',
+                    () => Navigator.pushNamed(context, '/terms-policies'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Center(
+                child: Column(
+                  children: [
+                    Image.asset(
+                      'assets/pacty_happy.png',
+                      width: 112,
+                      height: 112,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Pacty is here to help.',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 3),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+  Widget _buildSettingItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadii.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.primaryPurple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppRadii.md),
+              ),
+              child: Icon(icon, color: AppColors.primaryPurple, size: 20),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                title,
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: AppColors.grey400,
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildSettingItem(BuildContext context, IconData icon, String title, [VoidCallback? onTap]) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.black54),
-            const SizedBox(width: 12),
-            Text(title, style: const TextStyle(fontSize: 16, color: Colors.black)),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black26),
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SectionTitle({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppTextStyles.h3),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(subtitle, style: AppTextStyles.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsCard extends StatelessWidget {
+  final List<Widget> children;
+
+  const _SettingsCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(color: AppColors.grey200),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Column(
+        children: [
+          for (int i = 0; i < children.length; i++) ...[
+            children[i],
+            if (i < children.length - 1)
+              const Divider(height: 1, color: AppColors.grey200),
           ],
-        ),
+        ],
       ),
     );
   }

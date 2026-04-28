@@ -1,6 +1,6 @@
 // Reusable Bottom Navigation Bar
 // Used across main screens for consistent navigation
-// Handles routing between Dashboard, Profile, and Settings
+// Handles routing between Dashboard, Allocation, Profile, and Settings
 
 import 'package:flutter/material.dart';
 import '../../theme/colors.dart';
@@ -44,6 +44,11 @@ class AppBottomNavBar extends StatelessWidget {
             label: 'Home',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.pie_chart_outline_rounded),
+            activeIcon: Icon(Icons.pie_chart_rounded),
+            label: 'Allocation',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
             label: 'Profile',
@@ -68,10 +73,14 @@ class AppBottomNavBar extends StatelessWidget {
         Navigator.pushReplacementNamed(context, '/dashboard');
         break;
       case 1:
+        // Financial Allocation
+        Navigator.pushReplacementNamed(context, '/financial-allocation');
+        break;
+      case 2:
         // Profile
         Navigator.pushReplacementNamed(context, '/profile');
         break;
-      case 2:
+      case 3:
         // Settings
         Navigator.pushReplacementNamed(context, '/settings');
         break;

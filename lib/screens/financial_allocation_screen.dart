@@ -3,6 +3,7 @@ import '../models/financial_allocation.dart';
 import '../services/financial_allocation_service.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../widgets/common/bottom_nav_bar.dart';
 
 class FinancialAllocationScreen extends StatefulWidget {
   const FinancialAllocationScreen({super.key});
@@ -37,23 +38,21 @@ class _FinancialAllocationScreenState extends State<FinancialAllocationScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryPurple,
+        backgroundColor: AppColors.backgroundLight,
         elevation: 0,
         title: const Text(
           'Financial Allocation',
           style: TextStyle(
-            color: AppColors.textWhite,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textWhite),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _buildContent(),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
     );
   }
 

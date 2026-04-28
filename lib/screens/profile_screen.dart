@@ -88,7 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const Scaffold(
         backgroundColor: AppColors.backgroundLight,
         body: Center(child: CircularProgressIndicator()),
-        bottomNavigationBar: AppBottomNavBar(currentIndex: 1),
+        bottomNavigationBar: AppBottomNavBar(currentIndex: 2),
       );
     }
 
@@ -109,12 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('Profile'),
-        actions: [
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, '/settings'),
-            icon: const Icon(Icons.settings_outlined),
-          ),
-        ],
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -150,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
     );
   }
 }
@@ -168,6 +163,7 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayName =
         userProfile?.displayName ?? currentUser?.displayName ?? 'PocketPact User';
+    final isMockJane = userProfile?.uid == 'mock';
     final email = currentUser?.email ?? userProfile?.email ?? 'No email connected';
     final activePacts = userProfile?.activePacts ?? 0;
     final initial = displayName.isNotEmpty ? displayName.substring(0, 1) : 'U';
@@ -210,13 +206,15 @@ class _ProfileHeader extends StatelessWidget {
                 ),
               ],
             ),
-            child: Text(
-              initial.toUpperCase(),
-              style: AppTextStyles.h2.copyWith(
-                color: AppColors.primaryPurple,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+            child: isMockJane
+                ? const _MockJaneAnimatedAvatar()
+                : Text(
+                    initial.toUpperCase(),
+                    style: AppTextStyles.h2.copyWith(
+                      color: AppColors.primaryPurple,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -285,15 +283,34 @@ class _PactyProfileNote extends StatelessWidget {
         : PactyMessages.profile.first.message;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const PactyReactionWidget(
-          emotion: PactyEmotion.happy,
-          size: 72,
+        const Padding(
+          padding: EdgeInsets.only(top: AppSpacing.xxs),
+          child: PactyReactionWidget(
+            emotion: PactyEmotion.happy,
+            size: 96,
+          ),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: AppSpacing.md),
         Expanded(child: PactyMessageBubble(message: message)),
       ],
+    );
+  }
+}
+
+class _MockJaneAnimatedAvatar extends StatelessWidget {
+  const _MockJaneAnimatedAvatar();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipOval(
+      child: Image.asset(
+        'assets/jane_avatar.png',
+        width: 64,
+        height: 64,
+        fit: BoxFit.cover,
+      ),
     );
   }
 }

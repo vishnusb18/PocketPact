@@ -10,6 +10,8 @@ import 'package:pocket_pact/screens/create_pact_screen.dart';
 import 'package:pocket_pact/screens/pact_detail_screen.dart';
 import 'package:pocket_pact/screens/profile_screen.dart';
 import 'package:pocket_pact/screens/settings_screen.dart';
+import 'package:pocket_pact/screens/financial_allocation_screen.dart';
+import 'package:pocket_pact/screens/terms_policies_screen.dart';
 import 'package:pocket_pact/screens/add_friends_screen.dart';
 import 'package:pocket_pact/screens/link_bank_account_screen.dart';
 import 'package:pocket_pact/theme/app_theme.dart';
@@ -39,8 +41,10 @@ class MyApp extends StatelessWidget {
         '/pacty-demo': (context) => const PactyAnimationDemoScreen(),
         '/pact-detail': (context) => const PactDetailScreen(),
         '/create-pact': (context) => const CreatePactScreen(),
+        '/financial-allocation': (context) => const FinancialAllocationScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/terms-policies': (context) => const TermsPoliciesScreen(),
         '/add-friends': (context) => const AddFriendScreen(),
         '/auth': (context) => const AuthScreen(),
         '/link-bank-account': (context) => const LinkBankAccountScreen(),
