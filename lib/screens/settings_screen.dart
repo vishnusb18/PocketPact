@@ -103,7 +103,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // Helper for Section Headers (Account, Customization, etc.)
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
@@ -114,7 +113,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // Helper for individual Setting Rows
   Widget _buildSettingItem(BuildContext context, IconData icon, String title, [VoidCallback? onTap]) {
     return InkWell(
       onTap: onTap,
