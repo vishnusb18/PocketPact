@@ -6,6 +6,7 @@ import '../services/user_service.dart';
 import '../theme/app_design.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../widgets/common/bank_setup_prompt.dart';
 import '../widgets/common/bottom_nav_bar.dart';
 import '../widgets/common/custom_button.dart';
 import '../widgets/common/pacty_widgets.dart';
@@ -111,39 +112,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Profile'),
         automaticallyImplyLeading: false,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.xs,
-            AppSpacing.md,
-            AppSpacing.xl,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ProfileHeader(
-                currentUser: currentUser,
-                userProfile: effectiveProfile,
+      body: BankConnectionAware(
+        builder: (context, hasLinkedAccount) {
+          final profileForDisplay = !hasLinkedAccount && effectiveProfile != null
+              ? effectiveProfile.copyWith(
+                  totalContributed: 0,
+                  activePacts: 0,
+                  completedPacts: 0,
+                )
+              : effectiveProfile;
+
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.xs,
+                AppSpacing.md,
+                AppSpacing.xl,
               ),
-              const SizedBox(height: AppSpacing.md),
-              _PactyProfileNote(userProfile: effectiveProfile),
-              const SizedBox(height: AppSpacing.lg),
-              _ProgressSection(userProfile: effectiveProfile),
-              const SizedBox(height: AppSpacing.lg),
-              _AchievementsSection(userProfile: effectiveProfile),
-              const SizedBox(height: AppSpacing.lg),
-              _MyPactsPreview(),
-              const SizedBox(height: AppSpacing.md),
-              CustomButton(
-                label: 'Sign Out',
-                icon: Icons.logout_rounded,
-                variant: CustomButtonVariant.outline,
-                onPressed: _handleSignOut,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ProfileHeader(
+                    currentUser: currentUser,
+                    userProfile: profileForDisplay,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _PactyProfileNote(
+                    userProfile: profileForDisplay,
+                    hasLinkedAccount: hasLinkedAccount,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _ProgressSection(userProfile: profileForDisplay),
+                  const SizedBox(height: AppSpacing.lg),
+                  _AchievementsSection(userProfile: profileForDisplay),
+                  if (hasLinkedAccount) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    _MyPactsPreview(),
+                  ],
+                  const SizedBox(height: AppSpacing.md),
+                  CustomButton(
+                    label: 'Sign Out',
+                    icon: Icons.logout_rounded,
+                    variant: CustomButtonVariant.outline,
+                    onPressed: _handleSignOut,
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
     );
@@ -272,13 +290,19 @@ class _ProfileHeader extends StatelessWidget {
 
 class _PactyProfileNote extends StatelessWidget {
   final AppUser? userProfile;
+  final bool hasLinkedAccount;
 
-  const _PactyProfileNote({required this.userProfile});
+  const _PactyProfileNote({
+    required this.userProfile,
+    required this.hasLinkedAccount,
+  });
 
   @override
   Widget build(BuildContext context) {
     final totalContributed = userProfile?.totalContributed ?? 0.0;
-    final message = totalContributed > 0
+    final message = !hasLinkedAccount
+      ? PactyMessages.bankLinking.first.message
+      : totalContributed > 0
         ? 'You have contributed \$${totalContributed.toStringAsFixed(0)} so far. Nice momentum.'
         : PactyMessages.profile.first.message;
 

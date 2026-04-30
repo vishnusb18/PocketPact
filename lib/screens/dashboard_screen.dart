@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../theme/app_design.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 import '../utils/pacty_messages.dart';
+import '../widgets/common/bank_setup_prompt.dart';
 import '../widgets/common/bottom_nav_bar.dart';
 import '../widgets/common/custom_button.dart';
 import '../widgets/common/pacty_widgets.dart';
@@ -83,12 +83,12 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  late final PactyMessage _message;
+  late final PactyMessage _linkedAccountMessage;
 
   @override
   void initState() {
     super.initState();
-    _message = PactyMessages.dashboard[
+    _linkedAccountMessage = PactyMessages.dashboard[
         Random().nextInt(PactyMessages.dashboard.length)];
   }
 
@@ -122,9 +122,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final initial = _userInitial(currentUser?.email);
-
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.backgroundLight,
@@ -204,58 +201,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.xs,
-            AppSpacing.md,
-            AppSpacing.xl,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              PactyHeroCard(
-                eyebrow: 'TODAY WITH PACTY',
-                title: 'Your money goals are moving.',
-                message: _message,
-                mascotSize: 132,
-                trailing: _DashboardActions(),
+        child: BankConnectionAware(
+          builder: (context, hasLinkedAccount) {
+            final message = hasLinkedAccount
+                ? _linkedAccountMessage
+                : PactyMessages.bankLinking.first;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.xs,
+                AppSpacing.md,
+                AppSpacing.xl,
               ),
-              const SizedBox(height: AppSpacing.md),
-              const _LinkBankAccountCard(),
-              const SizedBox(height: AppSpacing.lg),
-              const _SectionHeader(
-                title: 'Top pacts',
-                subtitle: 'A quick read on where everyone stands',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PactyHeroCard(
+                    eyebrow: 'TODAY WITH PACTY',
+                    title: hasLinkedAccount
+                        ? 'Your money goals are moving.'
+                        : 'Link your first bank account.',
+                    message: message,
+                    mascotSize: 132,
+                    trailing: _DashboardActions(
+                      hasLinkedAccount: hasLinkedAccount,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  if (!hasLinkedAccount) ...[
+                    const BankSetupPromptCard(
+                      message:
+                          'Connect at least one bank account before you create your first pact or track any shared savings progress.',
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+                  if (hasLinkedAccount) ...[
+                    const _SectionHeader(
+                      title: 'Top pacts',
+                      subtitle: 'A quick read on where everyone stands',
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _GoalCarousel(goals: _sampleGoals),
+                    const SizedBox(height: AppSpacing.lg),
+                    _LeaderboardSection(entries: _sampleLeaderboard),
+                  ],
+                ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-              _GoalCarousel(goals: _sampleGoals),
-              const SizedBox(height: AppSpacing.lg),
-              _LeaderboardSection(entries: _sampleLeaderboard),
-            ],
-          ),
+            );
+          },
         ),
       ),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 0),
     );
   }
 
-  String _userInitial(String? email) {
-    if (email == null || email.isEmpty) return 'U';
-    return email.substring(0, 1).toUpperCase();
-  }
 }
 
 class _DashboardActions extends StatelessWidget {
+  final bool hasLinkedAccount;
+
+  const _DashboardActions({required this.hasLinkedAccount});
+
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
           child: CustomButton(
-            label: 'Create Pact',
-            icon: Icons.add_circle_outline_rounded,
-            onPressed: () => Navigator.pushNamed(context, '/create-pact'),
+            label: hasLinkedAccount ? 'Create Pact' : 'Link Bank',
+            icon: hasLinkedAccount
+                ? Icons.add_circle_outline_rounded
+                : Icons.account_balance_rounded,
+            onPressed: () => Navigator.pushNamed(
+              context,
+              hasLinkedAccount ? '/create-pact' : '/link-bank-account',
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -808,68 +829,3 @@ class _LeaderboardRow extends StatelessWidget {
   }
 }
 
-class _LinkBankAccountCard extends StatelessWidget {
-  const _LinkBankAccountCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadii.lg),
-        onTap: () => Navigator.pushNamed(context, '/link-bank-account'),
-        child: Ink(
-          padding: AppInsets.card,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(AppRadii.lg),
-            border: Border.all(color: AppColors.primaryPurple.withOpacity(0.12)),
-            boxShadow: AppShadows.soft,
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryPurple.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppRadii.md),
-                ),
-                child: const Icon(
-                  Icons.account_balance_rounded,
-                  color: AppColors.primaryPurple,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Link your bank',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      'Track savings securely with Plaid',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: AppColors.primaryPurple,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

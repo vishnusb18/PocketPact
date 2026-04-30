@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_design.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../widgets/common/bank_setup_prompt.dart';
 import '../widgets/common/custom_button.dart';
 
 class AddFriendScreen extends StatelessWidget {
@@ -31,11 +32,34 @@ class AddFriendScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [
-            _UserList(mode: _FriendListMode.requests),
-            _UserList(mode: _FriendListMode.friends),
-          ],
+        body: BankConnectionAware(
+          builder: (context, hasLinkedAccount) {
+            return Column(
+              children: [
+                if (!hasLinkedAccount)
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      0,
+                    ),
+                    child: BankSetupPromptCard(
+                      message:
+                          'Set up your first bank account before you start building pacts with friends.',
+                    ),
+                  ),
+                const Expanded(
+                  child: TabBarView(
+                    children: [
+                      _UserList(mode: _FriendListMode.requests),
+                      _UserList(mode: _FriendListMode.friends),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: FloatingActionButton.extended(

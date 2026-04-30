@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_design.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../widgets/common/bank_setup_prompt.dart';
 import '../widgets/common/custom_button.dart';
 import '../widgets/common/pacty_widgets.dart';
 
@@ -98,43 +99,63 @@ class PactDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.xs,
-              AppSpacing.md,
-              112,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SummaryCard(
-                  progress: progress,
-                  remaining: remaining,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                _ProgressCard(
-                  progress: progress,
-                  remaining: remaining,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                const _MembersSection(),
-                const SizedBox(height: AppSpacing.lg),
-                const _ContributionHistorySection(),
-              ],
-            ),
-          ),
-          _AddContributionButton(onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Add Contribution feature coming soon.'),
-                duration: Duration(seconds: 2),
+      body: BankConnectionAware(
+        builder: (context, hasLinkedAccount) {
+          if (!hasLinkedAccount) {
+            return const SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.xs,
+                AppSpacing.md,
+                AppSpacing.xl,
+              ),
+              child: BankSetupPromptCard(
+                title: 'Connect a bank before viewing pacts',
+                message:
+                    'PocketPact will not show pact details or contributions until you link at least one bank account.',
               ),
             );
-          }),
-        ],
+          }
+
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                  AppSpacing.md,
+                  112,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SummaryCard(
+                      progress: progress,
+                      remaining: remaining,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _ProgressCard(
+                      progress: progress,
+                      remaining: remaining,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    const _MembersSection(),
+                    const SizedBox(height: AppSpacing.lg),
+                    const _ContributionHistorySection(),
+                  ],
+                ),
+              ),
+              _AddContributionButton(onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Add Contribution feature coming soon.'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }),
+            ],
+          );
+        },
       ),
     );
   }

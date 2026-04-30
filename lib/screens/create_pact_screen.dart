@@ -5,6 +5,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../theme/app_design.dart';
+import '../widgets/common/bank_setup_prompt.dart';
 
 class CreatePactScreen extends StatefulWidget {
   const CreatePactScreen({super.key});
@@ -57,92 +59,112 @@ class _CreatePactScreenState extends State<CreatePactScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title
-              const Center(
-                child: Text(
-                  'Create New Pact',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+        child: BankConnectionAware(
+          builder: (context, hasLinkedAccount) {
+            if (!hasLinkedAccount) {
+              return const Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
                 ),
-              ),
-              const SizedBox(height: 36),
+                child: BankSetupPromptCard(
+                  title: 'Connect a bank before creating a pact',
+                  message:
+                      'Your first step is linking at least one bank account. Once that is done, you can create pacts and invite friends.',
+                ),
+              );
+            }
 
-              // Pact name
-              _buildLabel('Pact Name:'),
-              const SizedBox(height: 10),
-              _buildTextField(
-                controller: _pactNameController,
-                placeholder: 'Ex: "Super Savers"',
-              ),
-              const SizedBox(height: 28),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  const Center(
+                    child: Text(
+                      'Create New Pact',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 36),
 
-              // Describe pact + goal amount
-              _buildLabel('Describe Pact & Goal Amount:'),
-              const SizedBox(height: 10),
-              _buildTextField(
-                controller: _descriptionController,
-                placeholder: 'Ex: "Save \$100"',
-              ),
-              const SizedBox(height: 28),
+                  // Pact name
+                  _buildLabel('Pact Name:'),
+                  const SizedBox(height: 10),
+                  _buildTextField(
+                    controller: _pactNameController,
+                    placeholder: 'Ex: "Super Savers"',
+                  ),
+                  const SizedBox(height: 28),
 
-              // Deadline
-              _buildLabel('Target Date (MM/DD/YYYY):'),
-              const SizedBox(height: 10),
-              _buildTextField(
-                controller: _deadlineController,
-                placeholder: 'MM/DD/YYYY',
-                keyboardType: TextInputType.datetime,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
-                  _DateInputFormatter(),
+                  // Describe pact + goal amount
+                  _buildLabel('Describe Pact & Goal Amount:'),
+                  const SizedBox(height: 10),
+                  _buildTextField(
+                    controller: _descriptionController,
+                    placeholder: 'Ex: "Save \$100"',
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Deadline
+                  _buildLabel('Target Date (MM/DD/YYYY):'),
+                  const SizedBox(height: 10),
+                  _buildTextField(
+                    controller: _deadlineController,
+                    placeholder: 'MM/DD/YYYY',
+                    keyboardType: TextInputType.datetime,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
+                      _DateInputFormatter(),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Add members
+                  _buildLabel('Add members:'),
+                  const SizedBox(height: 10),
+                  _buildTextField(
+                    controller: _membersController,
+                    placeholder: 'Ex: "Charles Smith"',
+                    keyboardType: TextInputType.name,
+                  ),
+                  const SizedBox(height: 48),
+
+                  // Create pact button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _onCreatePact,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E1E1E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Create Pact',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
-              const SizedBox(height: 28),
-
-              // Add members
-              _buildLabel('Add members:'),
-              const SizedBox(height: 10),
-              _buildTextField(
-                controller: _membersController,
-                placeholder: 'Ex: "Charles Smith"',
-                keyboardType: TextInputType.name,
-              ),
-              const SizedBox(height: 48),
-
-              // Create pact button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _onCreatePact,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E1E1E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Create Pact',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

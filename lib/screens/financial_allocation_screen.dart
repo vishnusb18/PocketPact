@@ -1,8 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import '../models/financial_allocation.dart';
+import '../services/plaid_service.dart';
 import '../services/financial_allocation_service.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../widgets/common/bank_setup_prompt.dart';
 import '../widgets/common/bottom_nav_bar.dart';
 
 class FinancialAllocationScreen extends StatefulWidget {
@@ -40,15 +42,26 @@ class _FinancialAllocationScreenState extends State<FinancialAllocationScreen>
     super.dispose();
   }
 
-  void _loadData() {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
+  Future<void> _loadData() async {
+    final hasLinkedAccount = await PlaidService().hasLinkedAccount();
+    if (!mounted) return;
+
+    if (!hasLinkedAccount) {
       setState(() {
-        _score = FinancialAllocationService.getMockAllocationScore();
+        _score = null;
         _isLoading = false;
       });
-      _animController.forward();
+      return;
+    }
+
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+
+    setState(() {
+      _score = FinancialAllocationService.getMockAllocationScore();
+      _isLoading = false;
     });
+    _animController.forward();
   }
 
   @override
@@ -58,7 +71,7 @@ class _FinancialAllocationScreenState extends State<FinancialAllocationScreen>
       appBar: AppBar(
         backgroundColor: AppColors.backgroundLight,
         elevation: 0,
-        title: const Text('Budget Allocation', style: AppTextStyles.h3),
+        title: const Text('Budget Allocation'),
         automaticallyImplyLeading: false,
       ),
       body: _isLoading
@@ -67,7 +80,16 @@ class _FinancialAllocationScreenState extends State<FinancialAllocationScreen>
                 color: AppColors.primaryPurple,
               ),
             )
-          : _buildBody(),
+          : _score == null
+              ? const SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(16, 4, 16, 32),
+                  child: BankSetupPromptCard(
+                    title: 'Connect a bank before viewing allocation',
+                    message:
+                        'Your allocation page stays empty until you link at least one bank account.',
+                  ),
+                )
+              : _buildBody(),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
     );
   }
@@ -174,26 +196,28 @@ class _ScoreCard extends StatelessWidget {
                       strokeWidth: 8,
                       strokeCap: StrokeCap.round,
                     ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '$animated',
-                          style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1,
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '$animated',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              height: 1,
+                            ),
                           ),
-                        ),
-                        Text(
-                          '/ 100',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.white.withOpacity(0.65),
+                          TextSpan(
+                            text: ' /100',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.65),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -310,6 +334,9 @@ class _CategoryCard extends StatelessWidget {
   Color get _color =>
       _kCategoryColors[category.name] ?? AppColors.primaryPurple;
 
+    Color get _actualProgressColor =>
+      category.actual < category.ideal ? AppColors.error : AppColors.success;
+
   bool get _onTrack => category.gap.abs() <= 2;
   bool get _over => category.gap > 2;
 
@@ -390,7 +417,8 @@ class _CategoryCard extends StatelessWidget {
                     ((category.actual / 100) * animation.value).clamp(0.0, 1.0),
                 minHeight: 8,
                 backgroundColor: AppColors.grey100,
-                valueColor: AlwaysStoppedAnimation<Color>(_color),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(_actualProgressColor),
               ),
             ),
           ),
@@ -403,7 +431,7 @@ class _CategoryCard extends StatelessWidget {
                 label: 'Ideal ${category.ideal.toStringAsFixed(0)}%',
               ),
               _BarLabel(
-                color: _color,
+                color: _actualProgressColor,
                 label: 'Actual ${category.actual.toStringAsFixed(0)}%',
               ),
             ],

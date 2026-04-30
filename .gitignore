@@ -1,6 +1,9 @@
 # Personal Agentic setup
 *.claude
 
+# Secret keys
+*.env
+
 # Miscellaneous
 venv
 *.class

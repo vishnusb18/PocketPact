@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_design.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../widgets/common/bank_setup_prompt.dart';
 
 class TermsPoliciesScreen extends StatelessWidget {
   const TermsPoliciesScreen({super.key});
@@ -15,71 +16,82 @@ class TermsPoliciesScreen extends StatelessWidget {
         elevation: 0,
         title: const Text('Terms and Policies'),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.xs,
-            AppSpacing.md,
-            AppSpacing.xl,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              _PolicyIntro(),
-              SizedBox(height: AppSpacing.md),
-              _PolicySection(
-                title: '1. Overview',
-                content:
-                    'PocketPact helps friends and groups create savings pacts, track progress, and stay accountable. By using PocketPact, you agree to use the app responsibly and provide accurate information where required.',
+      body: BankConnectionAware(
+        builder: (context, hasLinkedAccount) {
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.xs,
+                AppSpacing.md,
+                AppSpacing.xl,
               ),
-              SizedBox(height: AppSpacing.sm),
-              _PolicySection(
-                title: '2. Account and Identity',
-                content:
-                    'You are responsible for maintaining the confidentiality of your account credentials. You must not impersonate another person or use unauthorized account access. You may request account deactivation at any time.',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!hasLinkedAccount) ...[
+                    const BankSetupPromptCard(
+                      message:
+                          'Link your first bank account to unlock PocketPact. Until then, pacts and allocation features stay unavailable.',
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+                  const _PolicyIntro(),
+                  const SizedBox(height: AppSpacing.md),
+                  const _PolicySection(
+                    title: '1. Overview',
+                    content:
+                        'PocketPact helps friends and groups create savings pacts, track progress, and stay accountable. By using PocketPact, you agree to use the app responsibly and provide accurate information where required.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const _PolicySection(
+                    title: '2. Account and Identity',
+                    content:
+                        'You are responsible for maintaining the confidentiality of your account credentials. You must not impersonate another person or use unauthorized account access. You may request account deactivation at any time.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const _PolicySection(
+                    title: '3. Savings Data and Contributions',
+                    content:
+                        'Pact goals, contribution totals, and progress indicators are provided for planning and motivation. They are not financial advice. You remain solely responsible for your own financial decisions and transactions.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const _PolicySection(
+                    title: '4. Bank Linking and Third-Party Services',
+                    content:
+                        'If you link a financial account, PocketPact may rely on third-party providers to access account data securely. PocketPact does not store your banking passwords. Data access is limited to features required for app functionality.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const _PolicySection(
+                    title: '5. Privacy and Data Use',
+                    content:
+                        'PocketPact stores profile and pact-related data to deliver core features such as progress tracking, reminders, and friend collaboration. We use this data only to operate and improve the service and do not sell personal data.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const _PolicySection(
+                    title: '6. User Conduct',
+                    content:
+                        'You agree not to abuse the app, spam other users, attempt unauthorized data access, or use the service for illegal activity. We may restrict access for misuse or policy violations.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const _PolicySection(
+                    title: '7. Service Availability',
+                    content:
+                        'We aim for reliable uptime, but features may be updated, changed, or temporarily unavailable due to maintenance or technical issues. PocketPact is provided on an as-is basis without guaranteed uninterrupted service.',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const _PolicySection(
+                    title: '8. Changes to Terms',
+                    content:
+                        'These terms may be updated as PocketPact evolves. Material updates will be reflected in-app with a revised effective date. Continued use of the app after updates indicates acceptance of the revised terms.',
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const _PolicyFootnote(),
+                ],
               ),
-              SizedBox(height: AppSpacing.sm),
-              _PolicySection(
-                title: '3. Savings Data and Contributions',
-                content:
-                    'Pact goals, contribution totals, and progress indicators are provided for planning and motivation. They are not financial advice. You remain solely responsible for your own financial decisions and transactions.',
-              ),
-              SizedBox(height: AppSpacing.sm),
-              _PolicySection(
-                title: '4. Bank Linking and Third-Party Services',
-                content:
-                    'If you link a financial account, PocketPact may rely on third-party providers to access account data securely. PocketPact does not store your banking passwords. Data access is limited to features required for app functionality.',
-              ),
-              SizedBox(height: AppSpacing.sm),
-              _PolicySection(
-                title: '5. Privacy and Data Use',
-                content:
-                    'PocketPact stores profile and pact-related data to deliver core features such as progress tracking, reminders, and friend collaboration. We use this data only to operate and improve the service and do not sell personal data.',
-              ),
-              SizedBox(height: AppSpacing.sm),
-              _PolicySection(
-                title: '6. User Conduct',
-                content:
-                    'You agree not to abuse the app, spam other users, attempt unauthorized data access, or use the service for illegal activity. We may restrict access for misuse or policy violations.',
-              ),
-              SizedBox(height: AppSpacing.sm),
-              _PolicySection(
-                title: '7. Service Availability',
-                content:
-                    'We aim for reliable uptime, but features may be updated, changed, or temporarily unavailable due to maintenance or technical issues. PocketPact is provided on an as-is basis without guaranteed uninterrupted service.',
-              ),
-              SizedBox(height: AppSpacing.sm),
-              _PolicySection(
-                title: '8. Changes to Terms',
-                content:
-                    'These terms may be updated as PocketPact evolves. Material updates will be reflected in-app with a revised effective date. Continued use of the app after updates indicates acceptance of the revised terms.',
-              ),
-              SizedBox(height: AppSpacing.md),
-              _PolicyFootnote(),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
